@@ -29,13 +29,13 @@ There are, however, a few drawbacks:
 
 note: `mod` refers to the modifier key of choice - `alt` or `win` (default `win`)
 
-| key combo                              | action                                                                   |
-| -------------------------------------- | ------------------------------------------------------------------------ |
-| `mod + s` followed by `mod + <HOTKEY>` | save current layout to workspace `mod + <HOTKEY>`                        |
-| `mod + <HOTKEY>`                       | switch to workspace <HOTKEY> (if <HOTKEY> has been assigned a workspace) |
-| `mod + l`                              | launch any applications that are not running on the current workspace    |
-| `mod + [0-9]`                          | focus window [0-9]<sup>†</sup>)                                          |
-| `shift + mod + <HOTKEY>`               | move focused window to workspace <HOTKEY>                                |
-| `mod + f`                              | toggle fullscreen of window                                              |
+| key combo                              | action                                                                       |
+| -------------------------------------- | ---------------------------------------------------------------------------- |
+| `mod + s` followed by `mod + <HOTKEY>` | save current layout to workspace `<HOTKEY>`                                  |
+| `mod + <HOTKEY>`                       | switch to workspace `<HOTKEY>` (if `<HOTKEY>` has been assigned a workspace) |
+| `mod + l`                              | launch any applications that are not running on the current workspace        |
+| `mod + [0-9]`                          | focus window [0-9]<sup>†</sup>                                               |
+| `shift + mod + <HOTKEY>`               | move focused window to workspace `<HOTKEY>`                                  |
+| `mod + f`                              | toggle fullscreen of window                                                  |
 
 <sup>†</sup> the "number" of a window is determined by its X coordinate - the window furthest to the left is window 1, the window 2nd furthest to the left is window 2, etc. The Y coordinate is used for two windows with the same X coordinate (window higher on the screen will come before the window lower on the screen)
