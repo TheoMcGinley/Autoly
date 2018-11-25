@@ -1,48 +1,10 @@
-#include "polychrome.h"
+#include "CAbGC.h"
+#define GRAB_KEY(K)       XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym(K)), Mod1Mask, DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync)
+#define GRAB_SHIFT_KEY(K) XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym(K)), ShiftMask|Mod1Mask, DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync)
+#define GRAB_MOUSE_KEY(K) XGrabButton(dpy, K, Mod1Mask, DefaultRootWindow(dpy), True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
 
-// globals defining window manager state
 Display * dpy;
-
-XWindowAttributes attr;
-XButtonEvent pointerOrigin;
-
-Workspace workspace[NUMWORKSPACES];
-int currentWorkspace;
-
-enum NewWindowDimensions newDimensions;
-
-Atom wm_state;
-Atom wm_change_state;
-Atom wm_protos;
-Atom wm_delete;
-
-static int init(void);
-
-int main(void) {
-
-	//if initialisation failed, exit with error
-	if(!init()) {
-		return 1;	
-	}
-
-	handleEvents();
-	return 0;
-}
-
-// Look for windows that already exist 
-static void scanWins() {
-    unsigned int nwins, i;
-    Window dummyw1, dummyw2, *wins;
-    XWindowAttributes attr;
-
-    XQueryTree(dpy, DefaultRootWindow(dpy), &dummyw1, &dummyw2, &wins, &nwins);
-    for (i = 0; i < nwins; i++) {
-        XGetWindowAttributes(dpy, wins[i], &attr);
-        if (!attr.override_redirect && attr.map_state == IsViewable)
-            XMapWindow(dpy, wins[i]);
-    }
-    XFree(wins);
-}
+int currentActivity;
 
 // fakeErrorHandler ensures that the wm does not halt on any errors
 int fakeErrorHandler(Display *d, XErrorEvent *e) {
@@ -62,114 +24,74 @@ static int init() {
 		return 0;
 	}
 
-	//ICCCM, taken from aewm
-    wm_protos = XInternAtom(dpy, "WM_PROTOCOLS", False);
-    wm_delete = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
-    wm_state = XInternAtom(dpy, "WM_STATE", False);
-    wm_change_state = XInternAtom(dpy, "WM_CHANGE_STATE", False);
+	currentActivity = 0;
 
-	currentWorkspace = 0;
+	// make all children of root give out notify events
+	XSelectInput (dpy, RootWindow(dpy, DefaultScreen(dpy)), SubstructureNotifyMask);
+	XSetInputFocus(dpy, RootWindow(dpy, DefaultScreen(dpy)), RevertToPointerRoot, CurrentTime);
 
-	//for each workspace, initialise the linked lists and colortracker
-	for (int j=0;j<NUMWORKSPACES;j++) {
-		for (int i=0;i<NUMCOLORS;i++) {
-			workspace[j].colorTracker[i] = 0;
-			workspace[j].clientList[i].id = UNDEFINED;
-			workspace[j].clientList[i].next = NULL;
-		}
-	}
+	// grab left and right click
+	GRAB_MOUSE_KEY(1);
+	GRAB_MOUSE_KEY(3);
 
-	//for each workspace, initialise the grid
-	for (int k=0;k<NUMWORKSPACES;k++) {
-		for (int i=0; i<GRIDWIDTH; i++) {
-			for (int j=0; j<GRIDHEIGHT; j++) {
-				workspace[k].grid[i][j] = 0;
-			}
-		}
-	}
+	// grab necessary keyboard keys
+	GRAB_KEY("Return"); 
+	GRAB_KEY("s"); // save layout
+	GRAB_KEY("l"); // load applications in layout
+	GRAB_KEY("d"); // development activity
+	GRAB_KEY("g"); // games activity
+	GRAB_KEY("b"); // browsing activity
+	GRAB_KEY("q"); // close focused window
+	GRAB_KEY("1");
+	GRAB_KEY("2");
+	GRAB_KEY("3");
+	GRAB_KEY("4");
+	GRAB_KEY("5");
+	GRAB_KEY("6");
+	GRAB_KEY("7");
+	GRAB_KEY("8");
+	GRAB_KEY("9");
+	GRAB_KEY("0");
 
-	for (int i=0;i<NUMWORKSPACES;i++) {
-		workspace[i].focused = NULL;
-	}
+	GRAB_SHIFT_KEY("1");
+	GRAB_SHIFT_KEY("2");
 
-	newDimensions = REGULAR;
-
-	//make all children of root give out notify events
-	XSelectInput (dpy, RootWindow(dpy, DefaultScreen(dpy)), SubstructureNotifyMask);    
-	XSetInputFocus(dpy, RootWindow(dpy, DefaultScreen(dpy)), RevertToNone, CurrentTime);
-
-	//grab keys needed for the wm
-    XGrabButton(dpy, 1, Mod1Mask, DefaultRootWindow(dpy), True,
-            ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
-    XGrabButton(dpy, 3, Mod1Mask, DefaultRootWindow(dpy), True,
-            ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None);
-
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("Return")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("a")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("s")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("d")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("f")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("g")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("h")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("q")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("z")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("x")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("c")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("b")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("p")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-
-	// hide/show
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("i")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("o")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-
-	//orientations
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("r")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("p")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("w")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("e")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-
-
-
-	//SHIFTS
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("g")), ShiftMask|Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("h")), ShiftMask|Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-
-	// workspaces 
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("j")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("k")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym("l")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym(";")), Mod1Mask,
-            DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync);
-
-    pointerOrigin.subwindow = None;
+	// ensure mouse is ready to move windows
+	mouseRelease();
 
 	XSetErrorHandler(fakeErrorHandler);
-	scanWins();
 	return 1;
+}
+
+int main(void) {
+
+	//if initialisation failed, exit with error
+	if(!init()) {
+		return 1;	
+	}
+
+	// handle all incoming XEvents
+	XEvent ev;
+    for(;;) {
+
+        XNextEvent(dpy, &ev);
+
+		switch (ev.type) {
+            case ButtonPress:   mousePress(&ev.xbutton);           break;
+            case ButtonRelease: mouseRelease();                    break;
+			case MotionNotify:  mouseMotion(&ev.xmotion);          break;
+			case KeyPress:      keyPress(&ev.xkey);                break;
+			case MapNotify:     windowMap(&ev.xmap);               break;
+            case UnmapNotify:   windowUnmap(&ev.xunmap);           break;
+			case DestroyNotify: windowDestroy(&ev.xdestroywindow); break;
+            case ClientMessage: windowMessage(&ev.xclient);        break;
+            // case ConfigureRequest:
+            // case Expose:
+		}
+
+    }
+
+	return 0;
 }
 
 

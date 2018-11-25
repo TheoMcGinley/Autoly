@@ -1,94 +1,21 @@
-#include "polychrome.h" 
+#include "CAbGC.h" 
 #include <X11/Xmd.h>
 
-void startApp(const char *command) {
+void executeCommand(const char *command) {
 	if (fork() == 0) {
 		execl(_PATH_BSHELL, _PATH_BSHELL, "-c", command, NULL);
 	}
 }
 
-// the formula is equivalent to (256*256*r + 256*g + b)
-int colorToPixelValue(int color) {
-	switch (color) {
-		case 0: 
-			return 16502449; // "a" for "apricot" (251, 206, 177)
-			// return 10053324; // "a" for "amethyst" (153, 102, 204)
-		case 1: 
-			return 16041008; // "s" for "saffron" (244, 196, 48)
-			// return 1004218;  // "s" for "sapphire" (15, 82, 186) 
-		case 2: 
-			return 1401021;  // "d" for "denim" (21, 96, 189)
-			// return 13362160; // "d" for "diamond" (203, 227, 240)
-		case 3: 
-			return 16140938; // "f" for "french rose" (246, 74, 138)
-			// return 11674146; // "f" for "firebrick" (178, 34, 34) (sorry)
-	}
-	return 0;
-}
-
-//updateType is either ADD or REMOVE (1 or -1 respectively)
-void updateGrid(IntTuple position, IntTuple clientDimensions, int updateType, int workspaceToUpdate) {
-	for (int i=0; i<GRIDWIDTH; i++) {
-		for (int j=0; j<GRIDHEIGHT; j++) {
-			if ( i >= position.x && i < (position.x + clientDimensions.x) && 
-			  	 j >= position.y && j < (position.y + clientDimensions.y)) {
-					workspace[workspaceToUpdate].grid[i][j] += updateType;
-			}
-		}
-	}
-}
-
-
-//find the least used colour for the current workspace
-int rarestColour() {
-	int minValue = CWS.colorTracker[0];
-	int minColor = 0;
-	for (int i=1; i<NUMCOLORS; i++) {
-		if (CWS.colorTracker[i] < minValue) {
-			minValue = CWS.colorTracker[i];
-			minColor = i;
-		}
-	}
-	return minColor;
-}
-
-/* it is in situations such as this that a structure such as a hashmap would
- * have been much superior to an array of linkedlists, being O(1) rather than
- * O(n). However, as n (being the number of windows) is never significantly
- * large (>1000), the performance boost gained by reimplenting the whole window
- * manager with e.g. a hash map is minimal compared to the developer time taken to 
- * refactor */
-int windowExists(Window w) {
-	Client *c;
-
-	for (int i=0; i<NUMCOLORS; i++) {
-		c = &CWS.clientList[i];
-
-		//if list empty, go to next list 
-		if (c->next == NULL) {
-			continue;
-		}
-
-		while (c->next != NULL) {
-
-			if (c->next->id == w) {
-				return 1;
-			}
-			c = c->next;
-		}
-	}
-	return 0;
-}
-
-
-// shouldBeIgnored determines if the window is a popup, dialogue box or
-// any other type of window which should not be tracked by the wm
-int shouldBeIgnored(Window win) {
+// giveBorder gives all regular windows a border, but doesn't
+// give a border to dropdown menus, dialogue boxes etc.
+void giveBorder(Window win) {
 	Atom actualType;
 	int actualFormat, status;
 	unsigned long nItems, bytesAfter;
 	unsigned char *propReturn = NULL;
 
+	// TODO replace this with simpler XGetWMProtocols
 	// iterate through window properties, see if _NET_WM_WINDOW_TYPE exists
 	int nProperties;
 	Bool windowProvidesWindowType = False;
@@ -99,10 +26,14 @@ int shouldBeIgnored(Window win) {
 			windowProvidesWindowType = True;
 		}
 	}
+	XFree(windowProperties);
 
-	// if the client does not specify its window type, track it by default
+	// if the client does not specify its window type, give
+	// it a border by default
 	if (!windowProvidesWindowType) {
-		return 0;
+		XSetWindowBorder(dpy, win, FOCUSBORDERCOLOR);
+		XSetWindowBorderWidth(dpy, win, BORDERTHICKNESS);
+		return;
 	}
 
 
@@ -112,34 +43,67 @@ int shouldBeIgnored(Window win) {
 			&actualType, &actualFormat, &nItems, &bytesAfter,
 			&propReturn);
 
-	// if the query fails, track the window by default
+	// if the query fails, do not give the window a border
 	if (status != Success) {
 		XFree(propReturn);
-		return 0;
+		return;
 	}
 
-	// clients may specify multiple window types - if any of them state
-	// that the window is a normal window then track as normal, else ignore
-	int ignoreWindow = 1;
+	// clients may specify multiple window types - if any of them specify
+	// that the window is a normal window, then give the window a border
 	Atom prop;
 	Atom NormalWindow = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_NORMAL", True);
-	char *name;
 	for (int i=0; i<nItems; i++) {
 		prop = ((Atom *)propReturn)[i];
 		if (prop == NormalWindow) {
-			ignoreWindow = 0;
+			XSetWindowBorder(dpy, win, FOCUSBORDERCOLOR);
+			XSetWindowBorderWidth(dpy, win, BORDERTHICKNESS);
 		}
 	}
 
 	XFree(propReturn);
-	return ignoreWindow;
+	return;
 
 }
 
-
-//"handle" here means ignore
-int handleXerror(Display *dpy, XErrorEvent *e) {
-	printf("???\n");
-	return 0;
+Window getFocusedWindow() {
+	Window focused = None;
+	int revert;
+	XGetInputFocus(dpy, &focused, &revert);
+	return focused;
 }
 
+// if client acknowledges ICCCM's WM_DELETE_WINDOW, close it nicely, else KILL
+// Calling this will in turn call an unmap and/or window destruction, removing
+// it from the grid
+void destroyFocusedWindow() {
+	Window focused = getFocusedWindow();
+	int revert;
+	XGetInputFocus(dpy, &focused, &revert);
+
+	//please don't try and kill the root window
+	if (focused == DefaultRootWindow(dpy)) return;
+
+    int i, n, found = 0;
+    Atom *protocols;
+    Atom wmDelete = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
+
+    if (XGetWMProtocols(dpy, focused, &protocols, &n)) {
+        for (i=0; i<n; i++) if (protocols[i] == wmDelete) found++;
+        XFree(protocols);
+    }
+
+    if (found) {
+		//from: https://nachtimwald.com/2009/11/08/sending-wm_delete_window-client-messages/
+		XEvent ev;
+		ev.xclient.type = ClientMessage;
+		ev.xclient.window = focused;
+		ev.xclient.message_type = XInternAtom(dpy, "WM_PROTOCOLS", True);
+		ev.xclient.format = 32;
+		ev.xclient.data.l[0] = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
+		ev.xclient.data.l[1] = CurrentTime;
+		XSendEvent(dpy, focused, False, NoEventMask, &ev);	
+	} else {
+		XKillClient(dpy, focused);
+	}
+}

@@ -6,7 +6,7 @@ CAbGC is built on the source code and lessons learnt from polychrome<sup>\*</sup
 1. The majority of time spent interacting with the window manager is spent rearranging windows, not swapping between them
 2. The majority of time spent on the computer is spent using the same few sets of applications in (roughly) the same layouts to perform the same tasks
 
-CAbGC (or Cab for short) kills these two birds with one stone by allowing users to define presets. Simply set up any applications as desired for a particular activity (e.g. for developing, place a browser on the left and 4 terminals on the right) and press `mod+s` to save the layout followed by the desired hotkey to bind the layout to (e.g. `mod+d`, for develop). Now, when `mod+d` is pressed, all the applications needed for developing will be shown in exactly The Right Place™. Swapping to another workspace (by pressing e.g. `mod+g` for games, another user-defined preset) will hide all development windows and show all windows desired for gaming, again in The Right Place™.
+CAbGC (or Cab for short) kills these two birds with one stone by allowing users to define presets. Simply set up any applications as desired for a particular activity (e.g. for developing, place a browser on the left and 4 terminals on the right) and press `mod+s` to save the layout followed by the desired hotkey to bind the layout to (e.g. `mod+d`, for develop). Now, when `mod+d` is pressed, all the applications needed for developing will be shown in exactly The Right Place™. Swapping to another activity (by pressing e.g. `mod+g` for games, another user-defined preset) will hide all development windows and show all windows desired for gaming, again in The Right Place™.
 
 If some or all of the applications required by an activity are not running, CAbGC can launch the missing applications by pressing `mod+l` (for load/launch), which will launch, resize, and position the applications as specified by the preset.
 
@@ -29,13 +29,13 @@ There are, however, a few drawbacks:
 
 note: `mod` refers to the modifier key of choice - `alt` or `win` (default `win`)
 
-| key combo                              | action                                                                       |
-| -------------------------------------- | ---------------------------------------------------------------------------- |
-| `mod + s` followed by `mod + <HOTKEY>` | save current layout to workspace `<HOTKEY>`                                  |
-| `mod + <HOTKEY>`                       | switch to workspace `<HOTKEY>` (if `<HOTKEY>` has been assigned a workspace) |
-| `mod + l`                              | launch any applications that are not running on the current workspace        |
-| `mod + [0-9]`                          | focus window [0-9]<sup>†</sup>                                               |
-| `shift + mod + <HOTKEY>`               | move focused window to workspace `<HOTKEY>`                                  |
-| `mod + f`                              | toggle fullscreen of window                                                  |
+| key combo                              | action                                                                      |
+| -------------------------------------- | --------------------------------------------------------------------------- |
+| `mod + s` followed by `mod + <HOTKEY>` | save current layout to activity `<HOTKEY>`                                  |
+| `mod + <HOTKEY>`                       | switch to activity `<HOTKEY>` (if `<HOTKEY>` has been assigned an activity) |
+| `mod + l`                              | launch any unlaunched applications required for current activity            |
+| `mod + [0-9]`                          | focus window [0-9]<sup>†</sup>                                              |
+| `shift + mod + <HOTKEY>`               | move focused window to activity `<HOTKEY>`                                  |
+| `mod + f`                              | toggle fullscreen of window                                                 |
 
 <sup>†</sup> the "number" of a window is determined by its X coordinate - the window furthest to the left is window 1, the window 2nd furthest to the left is window 2, etc. The Y coordinate is used for two windows with the same X coordinate (window higher on the screen will come before the window lower on the screen)
