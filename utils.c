@@ -7,36 +7,40 @@ void executeCommand(const char *command) {
 	}
 }
 
-// giveBorder gives all regular windows a border, but doesn't
-// give a border to dropdown menus, dialogue boxes etc.
-void giveBorder(Window win) {
-	Atom actualType;
-	int actualFormat, status;
-	unsigned long nItems, bytesAfter;
-	unsigned char *propReturn = NULL;
+// determines whether the window provides the passed atom as available information
+Bool windowProvidesAtom(Window win, Atom a) {
 
-	// TODO replace this with simpler XGetWMProtocols
-	// iterate through window properties, see if _NET_WM_WINDOW_TYPE exists
+	// iterate through window properties to determine if atom exists
 	int nProperties;
-	Bool windowProvidesWindowType = False;
-	Atom windowType = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE", True);
+	Bool providesAtom = False;
 	Atom *windowProperties = XListProperties(dpy, win, &nProperties);
 	for (int i=0; i<nProperties; i++) {
-		if (windowProperties[i] == windowType) {
-			windowProvidesWindowType = True;
+		if (windowProperties[i] == a) {
+			providesAtom = True;
 		}
 	}
 	XFree(windowProperties);
 
+	return providesAtom;
+}
+
+// giveBorder gives all regular windows a border, but doesn't
+// give a border to dropdown menus, dialogue boxes etc.
+void giveBorder(Window win) {
+
 	// if the client does not specify its window type, give
 	// it a border by default
-	if (!windowProvidesWindowType) {
+	Atom windowType = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE", True);
+	if (!windowProvidesAtom(win, windowType)) {
 		XSetWindowBorder(dpy, win, FOCUSBORDERCOLOR);
 		XSetWindowBorderWidth(dpy, win, BORDERTHICKNESS);
 		return;
 	}
 
-
+	Atom actualType;
+	int actualFormat, status;
+	unsigned long nItems, bytesAfter;
+	unsigned char *propReturn = NULL;
 	// adapted from xprop source code
 	status = XGetWindowProperty(dpy, win, windowType,
 			0L, sizeof(Atom), False, AnyPropertyType,

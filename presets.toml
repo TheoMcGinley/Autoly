@@ -1,0 +1,29 @@
+[d]
+	[d.window1]
+	wm_class = "Firefox"
+	width = 800
+	height = 600
+	x = 720
+	y = 120
+
+	[d.window2]
+	wm_class = "URxvt"
+	width = 600
+	height = 400
+	x = 1200
+	y = 600
+
+[g]
+	[g.window1]
+	wm_class = "Firefox"
+	width = 900
+	height = 500
+	x = 720
+	y = 120
+
+	[g.window2]
+	wm_class = "URxvt"
+	width = 500
+	height = 300
+	x = 1200
+	y = 600

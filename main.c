@@ -5,6 +5,8 @@
 
 Display * dpy;
 int currentActivity;
+enum wmMode wmMode;
+struct Preset presets;
 
 // fakeErrorHandler ensures that the wm does not halt on any errors
 int fakeErrorHandler(Display *d, XErrorEvent *e) {
@@ -25,6 +27,7 @@ static int init() {
 	}
 
 	currentActivity = 0;
+	wmMode = NORMAL;
 
 	// make all children of root give out notify events
 	XSelectInput (dpy, RootWindow(dpy, DefaultScreen(dpy)), SubstructureNotifyMask);
@@ -55,6 +58,8 @@ static int init() {
 
 	GRAB_SHIFT_KEY("1");
 	GRAB_SHIFT_KEY("2");
+
+	loadPresets();
 
 	// ensure mouse is ready to move windows
 	mouseRelease();

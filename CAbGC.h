@@ -24,10 +24,33 @@
 
 // END_DEFINES }}}
 
+// STRUCTS {{{
+
+struct Application {
+	char *wm_class;
+	int width;
+	int height;
+	int x;
+	int y;
+	struct Application *next;
+};
+
+struct Preset {
+	char *hotkey;
+	struct Application applicationList;
+	struct Preset *next;
+};
+
+// END_STRUCTS }}}
+
 // GLOBALS {{{
+
+enum wmMode {NORMAL, SAVE};
 
 extern Display * dpy;
 extern int currentActivity;
+extern enum wmMode wmMode;
+extern struct Preset presets;
 
 // END_GLOBALS }}}
 
@@ -51,11 +74,17 @@ extern void mousePress(XButtonEvent *);
 extern void mouseRelease();
 extern void mouseMotion(XMotionEvent *);
 
+// preset.c
+extern void saveMode();
+extern void loadPresets();
+extern void savePreset(const char *);
+
 // utils.c 
 extern void executeCommand(const char *);
 extern void giveBorder(Window);
 extern void destroyFocusedWindow();
 extern Window getFocusedWindow();
+extern Bool windowProvidesAtom(Window, Atom);
 
 // window.c
 extern void windowMap(XMapEvent *);

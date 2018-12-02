@@ -4,9 +4,8 @@
 static XWindowAttributes attr;
 static XButtonEvent pointerOrigin;
 
-// TODO resetFocusedBorder -> focus e->window?
 void mousePress(XButtonEvent *e) {
-	// don't do anything if clicking on the background
+	// don't do anything if not clicking a window
 	if (e->subwindow == None) {
 		return;
 	}
@@ -15,8 +14,8 @@ void mousePress(XButtonEvent *e) {
 	XGetWindowAttributes(dpy, e->subwindow, &attr);
 	pointerOrigin = *e;
 
+	// raise and focus window
 	XRaiseWindow(dpy, e->subwindow);
-	// focus this window
 	focusWindowByID(e->subwindow);
 }
 
@@ -41,4 +40,3 @@ void mouseMotion(XMotionEvent *e) {
 			MAX(1, attr.height + (pointerOrigin.button==3 ? ydiff : 0)));
 	}
 }
-

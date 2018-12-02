@@ -73,17 +73,8 @@ void switchToActivity(int activityID) {
 		return;
 	}
 
-	// TODO try XUnmapSubwindows(dpy, DefaultRootWindow(dpy));
-	XUnmapSubwindows(dpy, DefaultRootWindow(dpy));
-
 	// unmap all mapped windows
-	/* Window dummy1, dummy2, *windowList;
-	int numWindows;
-	XQueryTree(dpy, DefaultRootWindow(dpy), &dummy1, &dummy2, &windowList, &numWindows);
-	for (int i=0; i<numWindows; i++) {
-		XUnmapWindow(dpy, windowList[i]);
-	}
-	XFree(windowList); */
+	XUnmapSubwindows(dpy, DefaultRootWindow(dpy));
 
 	currentActivity = activityID;
 
