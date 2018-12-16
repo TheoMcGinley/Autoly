@@ -1,6 +1,5 @@
 #include "CAbGC.h"
 #include "toml.h"
-#include <string.h>
 #include <stdio.h> // for file manipulation
 #include <X11/Xutil.h> //for XClassHint
 
@@ -84,19 +83,24 @@ struct Application *loadApplication(TomlTable *table) {
 	// each value of the keyvals refers to an attribute of the window
 	// assign the attribute to the relevant variable
 	while (toml_table_iter_has_next(it)) {
-		printf("loadapp ITER\n");
 		TomlKeyValue *keyval = toml_table_iter_get(it);
+		printf("checking key of: %s\n", keyval->key->str);
 
 		// really wish C could switch on strings...
 		if (!strcmp(keyval->key->str, "wm_class")) {
+			printf("assigning value of %s to wm_class: \n", keyval->value->value.string->str);
 			app->wm_class = keyval->value->value.string->str;
 		} else if (!strcmp(keyval->key->str, "width")) {
+			printf("assigning value of %ld to width: \n", keyval->value->value.integer);
 			app->width = keyval->value->value.integer;
 		} else if (!strcmp(keyval->key->str, "height")) {
+			printf("assigning value of %ld to height: \n", keyval->value->value.integer);
 			app->height = keyval->value->value.integer;
 		} else if (!strcmp(keyval->key->str, "x")) {
+			printf("assigning value of %ld to x: \n", keyval->value->value.integer);
 			app->x = keyval->value->value.integer;
 		} else if (!strcmp(keyval->key->str, "y")) {
+			printf("assigning value of %ld to y: \n", keyval->value->value.integer);
 			app->y = keyval->value->value.integer;
 		}
 
@@ -124,7 +128,7 @@ struct Preset *loadPreset(TomlTable *table) {
 
 	// create the head of the application list and save the 
 	// start of the list for later
-	struct Application *newApp = malloc (sizeof (newApp));
+	struct Application *newApp = malloc (sizeof(newApp));
 	struct Application *applicationList = newApp;
 
 	// each value of the keyvals is a table referring to one of the 
@@ -243,6 +247,7 @@ void savePreset(const char *hotkey) {
 		char *wm_class = getWMclass(windowList[i]);
 
 		fprintf(fp, "\t[%s.window%d]\n", hotkey, i+1);
+		fprintf(fp, "\t# load_script = \"...\"\n", hotkey, i+1);
 		fprintf(fp, "\twm_class = \"%s\"\n", wm_class);
 		fprintf(fp, "\twidth = \"%d\"\n", width);
 		fprintf(fp, "\theight = \"%d\"\n", height);

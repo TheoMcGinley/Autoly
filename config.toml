@@ -1,0 +1,21 @@
+s = "cab save layout"
+l = "cab load layout"
+q = "cab close focused window"
+
+t = "urxvt"
+# enter = "urxvt"
+
+z = "mpc toggle -q"
+x = "mpc next -q"
+c = "nextalbum"
+
+1 = "focus window 1"
+2 = "focus window 2"
+3 = "focus window 3"
+4 = "focus window 4"
+5 = "focus window 5"
+6 = "focus window 6"
+7 = "focus window 7"
+8 = "focus window 8"
+9 = "focus window 9"
+0 = "focus window 0"

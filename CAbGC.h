@@ -3,13 +3,19 @@
 
 // INCLUDES {{{
 #include <X11/Xlib.h>
-#include <stdio.h>  // used for: printf
-#include <unistd.h> // used for: NULL, exit, fork, sleep
-#include <stdlib.h> // used for: NULL, malloc, free, exit, system
-#include <paths.h>  // used for: ???
+#include <stdio.h>     // used for: printf
+#include <unistd.h>    // used for: NULL, exit, fork, sleep
+#include <stdlib.h>    // used for: NULL, malloc, free, exit, system
+#include <paths.h>     // used for: ???
+#include <string.h>    // used for strcmp, strcpy, ...
+#include <fcntl.h>     // used for: open
+#include <sys/types.h> // used for: mkfifo
+#include <sys/stat.h>  // used for: mkfio
 // END_INCLUDES }}}
 
 // DEFINES {{{
+
+#define PIPE_FILE "/tmp/cabgc"
 
 #define NORMALBORDERCOLOR 2367780
 #define FOCUSBORDERCOLOR 16777215
@@ -41,6 +47,11 @@ struct Preset {
 	struct Preset *next;
 };
 
+struct Keybind {
+	char *hotkey;
+	void (*functionPointer)();
+};
+
 // END_STRUCTS }}}
 
 // GLOBALS {{{
@@ -48,7 +59,7 @@ struct Preset {
 enum wmMode {NORMAL, SAVE};
 
 extern Display * dpy;
-extern int currentActivity;
+extern char currentActivity[10];
 extern enum wmMode wmMode;
 extern struct Preset presets;
 
@@ -56,17 +67,21 @@ extern struct Preset presets;
 
 // FUNCTIONS {{{
 
+// commands.c
+extern void send_command(int, char **);
+extern void execute_wm_command(char *);
+
 // key.c
 extern void keyPress(XKeyEvent *);
 
 // map.c
-extern void addToMap(Window, int);
+extern void addToMap(Window, char *);
 extern void removeFromMap(Window);
-extern int  getActivityID(Window);
+extern char *getActivityID(Window);
 extern int  existsInMap(Window);
 extern void freeMap();
-extern void switchToActivity(int);
-extern void moveFocusedToActivity(int);
+extern void switchToActivity(char *);
+extern void moveFocusedToActivity(char *);
 
 
 // mouse.c

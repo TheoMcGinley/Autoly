@@ -3,10 +3,14 @@
 #define GRAB_SHIFT_KEY(K) XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym(K)), ShiftMask|Mod1Mask, DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync)
 #define GRAB_MOUSE_KEY(K) XGrabButton(dpy, K, Mod1Mask, DefaultRootWindow(dpy), True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
 
+#include <sys/types.h> // mkfifo
+#include <sys/stat.h> // mkfifo
+
 Display * dpy;
-int currentActivity;
+char currentActivity[10];
 enum wmMode wmMode;
 struct Preset presets;
+struct Keybind keybinds;
 
 // fakeErrorHandler ensures that the wm does not halt on any errors
 int fakeErrorHandler(Display *d, XErrorEvent *e) {
@@ -26,7 +30,6 @@ static int init() {
 		return 0;
 	}
 
-	currentActivity = 0;
 	wmMode = NORMAL;
 
 	// make all children of root give out notify events
@@ -60,6 +63,19 @@ static int init() {
 	GRAB_SHIFT_KEY("2");
 
 	loadPresets();
+	struct Preset *REMOVEME = presets.next;
+	printf("HOTKEY1: %s\n", REMOVEME->hotkey);
+	printf("HOTKEY APPLICATION1 CLASS: %s\n", REMOVEME->applicationList.next->wm_class);
+	printf("HOTKEY APPLICATION2 CLASS: %s\n", REMOVEME->applicationList.next->next->wm_class);
+	REMOVEME = REMOVEME->next;
+	printf("HOTKEY2: %s\n", REMOVEME->hotkey);
+	printf("HOTKEY2 APPLICATION1 CLASS: %s\n", REMOVEME->applicationList.next->wm_class);
+	printf("HOTKEY2 APPLICATION2 CLASS: %s\n", REMOVEME->applicationList.next->next->wm_class);
+
+	// TODO this requires at least one preset defined on startup
+	// figure out a better solution
+	// move to the first defined preset
+	// strcpy(currentActivity, presets.hotkey);
 
 	// ensure mouse is ready to move windows
 	mouseRelease();
@@ -68,19 +84,28 @@ static int init() {
 	return 1;
 }
 
-int main(void) {
+int main(int argc, char **argv) {
 
-	//if initialisation failed, exit with error
+	// if program has arguments, interpret the arguments as a command
+	if (argc > 1) {
+		send_command(argc, argv);
+		return 0;
+	}
+
+	// if initialisation failed, exit with error
 	if(!init()) {
 		return 1;	
 	}
 
-	// handle all incoming XEvents
+	// handle all incoming XEvents and messages to cabgc
+	char *pipe = PIPE_FILE;
+	mkfifo(pipe, 0666);
+	int pipe_fd = open(pipe, O_RDONLY | O_NONBLOCK);
 	XEvent ev;
     for(;;) {
 
+		// process next XEvent
         XNextEvent(dpy, &ev);
-
 		switch (ev.type) {
             case ButtonPress:   mousePress(&ev.xbutton);           break;
             case ButtonRelease: mouseRelease();                    break;
@@ -90,10 +115,15 @@ int main(void) {
             case UnmapNotify:   windowUnmap(&ev.xunmap);           break;
 			case DestroyNotify: windowDestroy(&ev.xdestroywindow); break;
             case ClientMessage: windowMessage(&ev.xclient);        break;
-            // case ConfigureRequest:
-            // case Expose:
 		}
 
+		// process message to wm (thanks hootwm!)
+		char buffer[511];
+		int length;
+        if (length = read(pipe_fd, buffer, sizeof(buffer))) {
+            buffer[length-1] = '\0';
+            execute_wm_command(buffer);
+		}
     }
 
 	return 0;

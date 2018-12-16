@@ -1,15 +1,16 @@
 #include "CAbGC.h"
 #include "uthash.h"
+// #include <string.h>
 
 struct mapElement {
 	int key; // windowID
-	int value; // activityID
+	char value[10]; // activityID name
 	UT_hash_handle hh; // make the struct hashable
 };
 
 static struct mapElement *map = NULL;
 
-void addToMap(Window win, int activityID) {
+void addToMap(Window win, char* activityID) {
 	struct mapElement *ele;
 	int windowID = (int)win;
 
@@ -21,7 +22,7 @@ void addToMap(Window win, int activityID) {
 		ele->key = windowID;
 		HASH_ADD_INT(map, key, ele);
 	}
-	ele->value = activityID;
+	strcpy(ele->value, activityID);
 
 }
 
@@ -36,7 +37,7 @@ void removeFromMap(Window win) {
 }
 
 // return the activityID that the window is associated with
-int getActivityID(Window win) {
+char* getActivityID(Window win) {
 	struct mapElement *ele;
 	int windowID = (int)win;
 
@@ -65,30 +66,31 @@ void freeMap() {
 	}
 }
 
-void switchToActivity(int activityID) {
-	printf("switching to activity: %d\n", activityID);
+void switchToActivity(char* activityID) {
+	printf("switching to activity: %s\n", activityID);
 
 	// don't do anything if switching to same activity
-	if (activityID == currentActivity) {
+	if (!strcmp(activityID, currentActivity)) {
 		return;
 	}
 
 	// unmap all mapped windows
 	XUnmapSubwindows(dpy, DefaultRootWindow(dpy));
 
-	currentActivity = activityID;
+	// update currentActivity
+	strcpy(currentActivity, activityID);
 
 	struct mapElement *ele;
 
 	// iterate through map, mapping all windows 
 	// associated with the new activity
 	for (ele=map; ele != NULL; ele=ele->hh.next) {
-		if (ele->value == currentActivity) {
+		if (!strcmp(ele->value, currentActivity)) {
 			XMapWindow(dpy, ele->key);
 		}
 	}
 }
 
-void moveFocusedToActivity(int activityID) {
+void moveFocusedToActivity(char *activityID) {
 
 }

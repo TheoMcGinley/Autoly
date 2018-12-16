@@ -1,9 +1,17 @@
 #include "CAbGC.h"
+#include <X11/Xutil.h> // needed for XLookupString
 // note: use xev to find keycodes for each key
 
 
-// TODO keycode to string conversion
-static void keyPressInSaveMode(XKeyEvent *e) {
+// TODO go through toml to get configs
+int configCommand(char *keyName) {
+	// for each keyval in config.toml
+	// if key->str == keyName
+	// get corresponding function and execute it
+	return 0;
+}
+
+/* static void keyPressInSaveMode(char *keyName) {
 	switch(e->keycode) {
 		case 40: savePreset("d"); return;
 		case 42: savePreset("g"); return;
@@ -19,7 +27,8 @@ void shiftKeyPress(XKeyEvent *e) {
 	}
 }
 
-static void normalKeyPress(XKeyEvent *e) {
+static void normalKeyPress(char *keyName) {
+
 	switch(e->keycode) {
 		// enter pressed
 		case 36: executeCommand("urxvt"); return;
@@ -60,23 +69,40 @@ static void normalKeyPress(XKeyEvent *e) {
 		// b pressed 
 		case 56: executeCommand("firefox"); return;
 	}
-}
+} */
 
 void keyPress(XKeyEvent *e) {
+	// translate key event into the name of the key pressed as a string
+	char keyName[10];
+	KeySym dummy1;
+	XComposeStatus dummy2;
+	XLookupString(e, keyName, 10, &dummy1, &dummy2);
+	printf("KEY PRESSED: %s\n", keyName);
+
+	// handle users saving a preset to a hotkey
 	if (wmMode == SAVE) {
-		keyPressInSaveMode(e);
+		savePreset(keyName);
 		return;
 	}
 
-	// If key pressed while mod + shift held
+	// if key is mapped to a config command, execute that command
+	if (configCommand(keyName)) {
+		// TODO free keyName?
+		return;
+	}
+
+
+	// If key pressed while mod + shift held 
 	if ((e->state & (ShiftMask|Mod1Mask)) == (ShiftMask|Mod1Mask)) {
-		shiftKeyPress(e);
+		moveFocusedToActivity(keyName);
 		return;
 	}
 	
 	// if key pressed while mod held
 	if ((e->state & (Mod1Mask)) == (Mod1Mask)) {
-		normalKeyPress(e);
+		switchToActivity(keyName);
+		return;
 	}
-}
 
+	//TODO free resources used for XLookupString?
+}
