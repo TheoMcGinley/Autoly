@@ -7,11 +7,13 @@ void windowMap(XMapEvent *e) {
 		giveBorder(e->window);
 		addToMap(e->window, currentActivity);
 
-		// if window to be mapped
-		struct Preset presetList = presets;
-		while (presetList->next != NULL) {
-
-		}
+		// TODO get wmclass of e->window
+		// compare wmclass against all applications in currentActivity presets
+		// if wmclass matches, move dimensions to fit preset
+		/* struct Preset *p = &presets;
+		while (p.next != NULL) {
+			p = p->next;
+		} */
 		// TODO if new window fits the description of one of the 
 		// applications in the current activity's preset
 		// (e.g. _NET_WM_NAME == "Mozilla Firefox") 

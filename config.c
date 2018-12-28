@@ -3,22 +3,6 @@
 // #include <stdio.h> // for file manipulation
 #include <X11/Xutil.h> //for XClassHint
 
-typedef void (*configFunction)();
-
-// ugly mapping of function names to the relevant function
-configFunction getConfigFunction(char *funcName) {
-	printf("FUNC NAME: %s\n", funcName);
-	if (!strcmp(funcName, "save layout")) {
-		return &savePreset;
-	} else if (!strcmp(funcName, "load layout")) {
-		return &loadLayout;
-	} else if (!strcmp(funcName, "close focused window")) {
-		return &destroyFocusedWindow;
-	}
-	// TODO remove this default return
-	return &destroyFocusedWindow;
-}
-
 void loadConfig() {
 
 	// load config.toml into table
@@ -32,16 +16,17 @@ void loadConfig() {
 	// used for appending to list of keybinds
 	struct Keybind *currentKeybind = &keybinds;
 
-	// for each config (e.g. s = saveLayout) in config.toml...
+	// for each mapping (e.g. x = "mpc next") in config.toml...
 	while (toml_table_iter_has_next(it)) {
+		// parse the mapping into a Keybind struct
 		TomlKeyValue *keyval = toml_table_iter_get(it);
 
 		struct Keybind *kb = malloc (sizeof(kb));
 		kb->hotkey = keyval->key->str;
-		kb->functionPointer = getConfigFunction(keyval->value->value.str->str);
+		kb->command = keyval->value->value.string->str;
 
 		// append keybind to end of list
-		currentKeybind->next = preset;
+		currentKeybind->next = kb;
 		currentKeybind = currentKeybind->next;
 
 		toml_table_iter_next(it);

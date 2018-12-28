@@ -48,6 +48,8 @@ static int init() {
 	GRAB_KEY("g"); // games activity
 	GRAB_KEY("b"); // browsing activity
 	GRAB_KEY("q"); // close focused window
+	GRAB_KEY("z"); // mpc next
+	GRAB_KEY("t"); // urxvt
 	GRAB_KEY("1");
 	GRAB_KEY("2");
 	GRAB_KEY("3");
@@ -63,14 +65,13 @@ static int init() {
 	GRAB_SHIFT_KEY("2");
 
 	loadPresets();
-	struct Preset *REMOVEME = presets.next;
+	loadConfig();
+
+	struct Keybind *REMOVEME = keybinds.next;
 	printf("HOTKEY1: %s\n", REMOVEME->hotkey);
-	printf("HOTKEY APPLICATION1 CLASS: %s\n", REMOVEME->applicationList.next->wm_class);
-	printf("HOTKEY APPLICATION2 CLASS: %s\n", REMOVEME->applicationList.next->next->wm_class);
-	REMOVEME = REMOVEME->next;
-	printf("HOTKEY2: %s\n", REMOVEME->hotkey);
-	printf("HOTKEY2 APPLICATION1 CLASS: %s\n", REMOVEME->applicationList.next->wm_class);
-	printf("HOTKEY2 APPLICATION2 CLASS: %s\n", REMOVEME->applicationList.next->next->wm_class);
+	printf("HOTKEY1 COMMAND: %s\n", REMOVEME->command);
+	printf("HOTKEY2: %s\n", REMOVEME->next->hotkey);
+	printf("HOTKEY2 COMMAND: %s\n", REMOVEME->next->command);
 
 	// TODO this requires at least one preset defined on startup
 	// figure out a better solution
@@ -104,7 +105,7 @@ int main(int argc, char **argv) {
 	XEvent ev;
     for(;;) {
 
-		// process next XEvent
+		// process next XEvent (blocks until event found)
         XNextEvent(dpy, &ev);
 		switch (ev.type) {
             case ButtonPress:   mousePress(&ev.xbutton);           break;

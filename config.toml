@@ -1,11 +1,12 @@
-s = "cab save layout"
-l = "cab load layout"
-q = "cab close focused window"
-
+z = "mpc toggle -q"
 t = "urxvt"
+
+s = "aflatwm save"
+l = "aflatwm load layout"
+q = "aflatwm close focused window"
+
 # enter = "urxvt"
 
-z = "mpc toggle -q"
 x = "mpc next -q"
 c = "nextalbum"
 

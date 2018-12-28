@@ -49,7 +49,8 @@ struct Preset {
 
 struct Keybind {
 	char *hotkey;
-	void (*functionPointer)();
+	char *command;
+	struct Keybind *next;
 };
 
 // END_STRUCTS }}}
@@ -62,6 +63,7 @@ extern Display * dpy;
 extern char currentActivity[10];
 extern enum wmMode wmMode;
 extern struct Preset presets;
+extern struct Keybind keybinds;
 
 // END_GLOBALS }}}
 
@@ -70,6 +72,9 @@ extern struct Preset presets;
 // commands.c
 extern void send_command(int, char **);
 extern void execute_wm_command(char *);
+
+// config.c
+extern void loadConfig();
 
 // key.c
 extern void keyPress(XKeyEvent *);

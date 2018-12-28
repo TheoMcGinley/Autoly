@@ -3,11 +3,31 @@
 // note: use xev to find keycodes for each key
 
 
-// TODO go through toml to get configs
+// if the given key is mapped to a command, execute the command
 int configCommand(char *keyName) {
-	// for each keyval in config.toml
-	// if key->str == keyName
-	// get corresponding function and execute it
+	// iterate through keybinds until hotkey found or end of list
+	struct Keybind *kb = &keybinds;
+	while (kb->next != NULL) {
+		kb = kb->next;
+		if (!strcmp(kb->hotkey, keyName)) {
+			executeCommand(kb->command);
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+
+// iterate through presets until hotkey found or end of list
+int isWorkspace(char *keyName) {
+	struct Preset *ps = &presets;
+	while (ps->next != NULL) {
+		ps = ps->next;
+		if (!strcmp(ps->hotkey, keyName)) {
+			return 1;
+		}
+	}
 	return 0;
 }
 
@@ -91,9 +111,15 @@ void keyPress(XKeyEvent *e) {
 		return;
 	}
 
+	// if key is a preset defined in presets.toml, switch to it
+	if (isWorkspace(keyName)) {
+		switchToActivity(keyName);
+		return;
+	}
+
 
 	// If key pressed while mod + shift held 
-	if ((e->state & (ShiftMask|Mod1Mask)) == (ShiftMask|Mod1Mask)) {
+	/*if ((e->state & (ShiftMask|Mod1Mask)) == (ShiftMask|Mod1Mask)) {
 		moveFocusedToActivity(keyName);
 		return;
 	}
@@ -102,7 +128,7 @@ void keyPress(XKeyEvent *e) {
 	if ((e->state & (Mod1Mask)) == (Mod1Mask)) {
 		switchToActivity(keyName);
 		return;
-	}
+	}*/
 
 	//TODO free resources used for XLookupString?
 }

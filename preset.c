@@ -247,7 +247,7 @@ void savePreset(const char *hotkey) {
 		char *wm_class = getWMclass(windowList[i]);
 
 		fprintf(fp, "\t[%s.window%d]\n", hotkey, i+1);
-		fprintf(fp, "\t# load_script = \"...\"\n", hotkey, i+1);
+		fprintf(fp, "\t# load_script = \"...\"\n");
 		fprintf(fp, "\twm_class = \"%s\"\n", wm_class);
 		fprintf(fp, "\twidth = \"%d\"\n", width);
 		fprintf(fp, "\theight = \"%d\"\n", height);

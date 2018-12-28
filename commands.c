@@ -14,5 +14,5 @@ void send_command(int argc, char **argv) {
 
 void execute_wm_command(char *command) {
 	printf("command received: %s\n", command);
-	executeCommand("firefox");
+	executeCommand("pcmanfm");
 }
