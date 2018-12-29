@@ -70,6 +70,7 @@ extern struct Keybind keybinds;
 // FUNCTIONS {{{
 
 // commands.c
+extern void listen_for_commands();
 extern void send_command(int, char **);
 extern void execute_wm_command(char *);
 
@@ -96,8 +97,8 @@ extern void mouseMotion(XMotionEvent *);
 
 // preset.c
 extern void saveMode();
-extern void loadPresets();
-extern void savePreset(const char *);
+extern void read_presets();
+extern void write_preset(const char *);
 
 // utils.c 
 extern void executeCommand(const char *);

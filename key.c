@@ -99,9 +99,16 @@ void keyPress(XKeyEvent *e) {
 	XLookupString(e, keyName, 10, &dummy1, &dummy2);
 	printf("KEY PRESSED: %s\n", keyName);
 
+
+	/* if (e->keycode == 24) {
+		printf("it's a Q mate\n");
+		destroyFocusedWindow();
+		return;
+	} */
+
 	// handle users saving a preset to a hotkey
 	if (wmMode == SAVE) {
-		savePreset(keyName);
+		write_preset(keyName);
 		return;
 	}
 

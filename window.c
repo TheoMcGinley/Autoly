@@ -23,10 +23,11 @@ void windowMap(XMapEvent *e) {
 }
 
 void windowUnmap(XUnmapEvent *e) {
-
+	printf("unmapping (doing nothing)\n");
 }
 
 void windowDestroy(XDestroyWindowEvent *e) {
+	printf("destroying - removing from map\n");
 	removeFromMap(e->window);
 }
 

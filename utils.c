@@ -71,9 +71,12 @@ void giveBorder(Window win) {
 }
 
 Window getFocusedWindow() {
+	printf("entered getFocused \n");
 	Window focused = None;
 	int revert;
+	printf("getting focused \n");
 	XGetInputFocus(dpy, &focused, &revert);
+	printf("got focused, returning \n");
 	return focused;
 }
 
@@ -81,23 +84,31 @@ Window getFocusedWindow() {
 // Calling this will in turn call an unmap and/or window destruction, removing
 // it from the grid
 void destroyFocusedWindow() {
+	printf("entered destroyFocusedWindow\n");
 	Window focused = getFocusedWindow();
+	printf("got focused\n");
+	printf("got focused, focused = %lx\n", focused);
 	int revert;
 	XGetInputFocus(dpy, &focused, &revert);
 
 	//please don't try and kill the root window
 	if (focused == DefaultRootWindow(dpy)) return;
 
+	printf("passed default \n");
+	
     int i, n, found = 0;
     Atom *protocols;
     Atom wmDelete = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 
+	printf("getting protocols \n");
     if (XGetWMProtocols(dpy, focused, &protocols, &n)) {
         for (i=0; i<n; i++) if (protocols[i] == wmDelete) found++;
         XFree(protocols);
     }
 
+	printf("got protocols \n");
     if (found) {
+		printf("found\n");
 		//from: https://nachtimwald.com/2009/11/08/sending-wm_delete_window-client-messages/
 		XEvent ev;
 		ev.xclient.type = ClientMessage;
@@ -108,6 +119,7 @@ void destroyFocusedWindow() {
 		ev.xclient.data.l[1] = CurrentTime;
 		XSendEvent(dpy, focused, False, NoEventMask, &ev);	
 	} else {
+		printf("KILLING\n");
 		XKillClient(dpy, focused);
 	}
 }

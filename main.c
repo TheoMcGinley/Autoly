@@ -64,7 +64,7 @@ static int init() {
 	GRAB_SHIFT_KEY("1");
 	GRAB_SHIFT_KEY("2");
 
-	loadPresets();
+	read_presets();
 	loadConfig();
 
 	struct Keybind *REMOVEME = keybinds.next;
@@ -98,10 +98,10 @@ int main(int argc, char **argv) {
 		return 1;	
 	}
 
-	// handle all incoming XEvents and messages to cabgc
-	char *pipe = PIPE_FILE;
-	mkfifo(pipe, 0666);
-	int pipe_fd = open(pipe, O_RDONLY | O_NONBLOCK);
+	// handle all incoming commands asynchronously
+	listen_for_commands();
+
+	// handle all incoming XEvents
 	XEvent ev;
     for(;;) {
 
@@ -118,13 +118,6 @@ int main(int argc, char **argv) {
             case ClientMessage: windowMessage(&ev.xclient);        break;
 		}
 
-		// process message to wm (thanks hootwm!)
-		char buffer[511];
-		int length;
-        if (length = read(pipe_fd, buffer, sizeof(buffer))) {
-            buffer[length-1] = '\0';
-            execute_wm_command(buffer);
-		}
     }
 
 	return 0;

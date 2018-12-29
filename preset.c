@@ -9,7 +9,7 @@ void saveMode() {
 
 // if a preset has already been defined for
 // the given hotkey, remove it from presets.toml
-void removeExistingPreset(const char *hotkey) {
+void remove_existing_preset(const char *hotkey) {
 
 	FILE *fp;
 	fp = fopen("/home/theo/dev/CAbGC/presets.toml", "a");
@@ -67,7 +67,7 @@ void removeExistingPreset(const char *hotkey) {
 }
 
 
-struct Application *loadApplication(TomlTable *table) {
+struct Application *read_application(TomlTable *table) {
 
 	TomlErr err = TOML_ERR_INIT;
 	TomlTableIter *it = toml_table_iter_new(table, &err);
@@ -115,7 +115,7 @@ struct Application *loadApplication(TomlTable *table) {
 }
 
 // t is the table referring to the activity (e.g. [d])
-struct Preset *loadPreset(TomlTable *table) {
+struct Preset *read_preset(TomlTable *table) {
 
 	TomlErr err = TOML_ERR_INIT;
 	TomlTableIter *it = toml_table_iter_new(table, &err);
@@ -138,7 +138,7 @@ struct Preset *loadPreset(TomlTable *table) {
 		TomlKeyValue *keyval = toml_table_iter_get(it);
 
 		// append application to end of list
-		newApp->next = loadApplication(keyval->value->value.table);
+		newApp->next = read_application(keyval->value->value.table);
 		newApp = newApp->next;
 
 		toml_table_iter_next(it);
@@ -156,7 +156,7 @@ struct Preset *loadPreset(TomlTable *table) {
 	return preset;
 }
 
-void loadPresets() {
+void read_presets() {
 
 	// load presets.toml into table
 	TomlErr err = TOML_ERR_INIT;
@@ -174,7 +174,7 @@ void loadPresets() {
 		TomlKeyValue *keyval = toml_table_iter_get(it);
 		// build the preset structure
 		// struct Preset *preset = loadPreset(keyval->value->table);
-		struct Preset *preset = loadPreset(keyval->value->value.table);
+		struct Preset *preset = read_preset(keyval->value->value.table);
 		preset->hotkey =  keyval->key->str;
 
 		// append preset to end of list
@@ -221,11 +221,12 @@ char *getWMclass(Window win) {
 }
 
 // save current layout to specified hotkey
-void savePreset(const char *hotkey) {
+// by writing to presets.toml
+void write_preset(const char *hotkey) {
 
 	printf("saving preset!\n");
 
-	removeExistingPreset(hotkey);
+	remove_existing_preset(hotkey);
 
 	FILE *fp;
 	fp = fopen("/home/theo/dev/CAbGC/presets.toml", "a");
@@ -262,4 +263,13 @@ cleanup:
 	XFree(windowList);
 	fclose(fp);
 	wmMode = NORMAL;
+}
+
+void load_applications() {
+	printf("loading applications\n");
+	/* TODO
+	 * for each application defined in presets for the current activity:
+	 * check if already loaded
+	 * if not loaded, run load script
+	 */
 }

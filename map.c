@@ -31,9 +31,11 @@ void removeFromMap(Window win) {
 	struct mapElement *ele;
 	int windowID = (int)win;
 
+	printf("removing window %d from map...\n", windowID);
 	HASH_FIND_INT(map, &windowID, ele);
 	HASH_DEL(map, ele);
 	free(ele);
+	printf("finished removing window %d from map\n", windowID);
 }
 
 // return the activityID that the window is associated with
