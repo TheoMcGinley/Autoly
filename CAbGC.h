@@ -71,7 +71,7 @@ extern struct Keybind keybinds;
 
 // commands.c
 extern void send_command(int, char **);
-extern void execute_wm_command(char *);
+extern void handleMessage(XClientMessageEvent *);
 
 // config.c
 extern void loadConfig();
@@ -110,7 +110,6 @@ extern Bool windowProvidesAtom(Window, Atom);
 extern void windowMap(XMapEvent *);
 extern void windowUnmap(XUnmapEvent *);
 extern void windowDestroy(XDestroyWindowEvent *);
-extern void windowMessage(XClientMessageEvent *);
 extern void focusWindowByID(Window);
 extern void focusWindowByNumber(int);
 

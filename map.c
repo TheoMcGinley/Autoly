@@ -1,6 +1,5 @@
 #include "CAbGC.h"
 #include "uthash.h"
-// #include <string.h>
 
 struct mapElement {
 	int key; // windowID
@@ -32,6 +31,10 @@ void removeFromMap(Window win) {
 	int windowID = (int)win;
 
 	HASH_FIND_INT(map, &windowID, ele);
+	// don't try to delete non-existant window
+	if (ele == NULL) {
+		return;
+	}
 	HASH_DEL(map, ele);
 	free(ele);
 }

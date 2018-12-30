@@ -82,8 +82,6 @@ Window getFocusedWindow() {
 // it from the grid
 void destroyFocusedWindow() {
 	Window focused = getFocusedWindow();
-	int revert;
-	XGetInputFocus(dpy, &focused, &revert);
 
 	//please don't try and kill the root window
 	if (focused == DefaultRootWindow(dpy)) return;
@@ -106,6 +104,7 @@ void destroyFocusedWindow() {
 		ev.xclient.format = 32;
 		ev.xclient.data.l[0] = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 		ev.xclient.data.l[1] = CurrentTime;
+
 		XSendEvent(dpy, focused, False, NoEventMask, &ev);	
 	} else {
 		XKillClient(dpy, focused);

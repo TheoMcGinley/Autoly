@@ -1,18 +1,44 @@
 #include "CAbGC.h"
-#include <strings.h>
+#include <string.h>
 
-// quick hack - replace with writing args directly to pipe
+#define CASE(c) if (!strcmp(e->data.b, c))
+
 void send_command(int argc, char **argv) {
-	if (!strcmp(argv[1], "save")) {
-		executeCommand("echo save > /tmp/cabgc");
-	} else if (!strcmp(argv[1], "load")) {
-		executeCommand("echo load > /tmp/cabgc");
-	} else if (!strcmp(argv[1], "close")) {
-		executeCommand("echo close > /tmp/cabgc");
+	if (!(dpy = XOpenDisplay(0x0))) {
+		return;
 	}
+
+	XEvent ev;
+	ev.xclient.type = ClientMessage;
+	ev.xclient.window = RootWindow(dpy, DefaultScreen(dpy));
+	ev.xclient.message_type = XInternAtom(dpy, "WM_CHANGE_STATE", True);
+	ev.xclient.format = 8;
+	memcpy(ev.xclient.data.b, argv[1], 20);
+
+	XSendEvent(dpy, RootWindow(dpy, DefaultScreen(dpy)), False, SubstructureRedirectMask|SubstructureNotifyMask, &ev);
+	XFlush(dpy);
 }
 
-void execute_wm_command(char *command) {
-	printf("command received: %s\n", command);
-	executeCommand("pcmanfm");
+
+// handle messages sent to the wm for closing, focusing windows etc
+// running the command "cabgc close" will end up sending an event here
+// with e->data.b equal to "close"
+void handleMessage(XClientMessageEvent *e) {
+	// ICCCM requires iconify (hide)
+	Atom wmChangeState = XInternAtom(dpy, "WM_CHANGE_STATE", False);
+    if (e->message_type == wmChangeState &&
+			e->format == 32 && e->data.l[0] == IconicState) {
+		// TODO hide(e->window);
+		return;
+	}
+	
+	CASE("save") {
+		printf("entering save mode...\n");
+		saveMode();
+	} else CASE("load") {
+		printf("loading applications...\n");
+	} else CASE("close") {
+		destroyFocusedWindow();
+	}
+
 }

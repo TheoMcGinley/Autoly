@@ -3,9 +3,6 @@
 #define GRAB_SHIFT_KEY(K) XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym(K)), ShiftMask|Mod1Mask, DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync)
 #define GRAB_MOUSE_KEY(K) XGrabButton(dpy, K, Mod1Mask, DefaultRootWindow(dpy), True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
 
-#include <sys/types.h> // mkfifo
-#include <sys/stat.h> // mkfifo
-
 Display * dpy;
 char currentActivity[10];
 enum wmMode wmMode;
@@ -67,12 +64,6 @@ static int init() {
 	loadPresets();
 	loadConfig();
 
-	struct Keybind *REMOVEME = keybinds.next;
-	printf("HOTKEY1: %s\n", REMOVEME->hotkey);
-	printf("HOTKEY1 COMMAND: %s\n", REMOVEME->command);
-	printf("HOTKEY2: %s\n", REMOVEME->next->hotkey);
-	printf("HOTKEY2 COMMAND: %s\n", REMOVEME->next->command);
-
 	// TODO this requires at least one preset defined on startup
 	// figure out a better solution
 	// move to the first defined preset
@@ -81,7 +72,7 @@ static int init() {
 	// ensure mouse is ready to move windows
 	mouseRelease();
 
-	XSetErrorHandler(fakeErrorHandler);
+	// XSetErrorHandler(fakeErrorHandler);
 	return 1;
 }
 
@@ -98,10 +89,7 @@ int main(int argc, char **argv) {
 		return 1;	
 	}
 
-	// handle all incoming XEvents and messages to cabgc
-	char *pipe = PIPE_FILE;
-	mkfifo(pipe, 0666);
-	int pipe_fd = open(pipe, O_RDONLY | O_NONBLOCK);
+	// handle all incoming XEvents
 	XEvent ev;
     for(;;) {
 
@@ -115,19 +103,10 @@ int main(int argc, char **argv) {
 			case MapNotify:     windowMap(&ev.xmap);               break;
             case UnmapNotify:   windowUnmap(&ev.xunmap);           break;
 			case DestroyNotify: windowDestroy(&ev.xdestroywindow); break;
-            case ClientMessage: windowMessage(&ev.xclient);        break;
+            case ClientMessage: handleMessage(&ev.xclient);        break;
 		}
 
-		// process message to wm (thanks hootwm!)
-		char buffer[511];
-		int length;
-        if (length = read(pipe_fd, buffer, sizeof(buffer))) {
-            buffer[length-1] = '\0';
-            execute_wm_command(buffer);
-		}
     }
 
 	return 0;
 }
-
-

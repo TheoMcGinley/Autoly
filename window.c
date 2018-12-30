@@ -30,15 +30,6 @@ void windowDestroy(XDestroyWindowEvent *e) {
 	removeFromMap(e->window);
 }
 
-// All that is required by ICCCM is iconify (hide)
-void windowMessage(XClientMessageEvent *e) {
-	Atom wmChangeState = XInternAtom(dpy, "WM_CHANGE_STATE", False);
-    if (e->message_type == wmChangeState && 
-			e->format == 32 && e->data.l[0] == IconicState) {
-		// TODO hide(e->window);
-	}
-}
-
 void focusWindowByID(Window win) {
 	// change the color of the old focused window back to non-focused
 	XSetWindowBorder(dpy, getFocusedWindow(), NORMALBORDERCOLOR);

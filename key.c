@@ -98,6 +98,7 @@ void keyPress(XKeyEvent *e) {
 	XComposeStatus dummy2;
 	XLookupString(e, keyName, 10, &dummy1, &dummy2);
 	printf("KEY PRESSED: %s\n", keyName);
+	printf("KEY PRESSED: %s\n", XKeysymToString(XKeycodeToKeysym(dpy, e->keycode, 0)));
 
 	// handle users saving a preset to a hotkey
 	if (wmMode == SAVE) {

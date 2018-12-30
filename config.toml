@@ -2,8 +2,8 @@ z = "mpc toggle -q"
 t = "urxvt"
 
 s = "aflatwm save"
-l = "aflatwm load layout"
-q = "aflatwm close focused window"
+l = "aflatwm load"
+q = "aflatwm close"
 
 # enter = "urxvt"
 

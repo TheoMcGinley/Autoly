@@ -1,7 +1,5 @@
 #include "CAbGC.h"
 #include "toml.h"
-// #include <stdio.h> // for file manipulation
-#include <X11/Xutil.h> //for XClassHint
 
 void loadConfig() {
 
