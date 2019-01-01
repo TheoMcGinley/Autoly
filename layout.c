@@ -1,49 +1,51 @@
-#include "CAbGC.h"
+#include "autoly.h"
 #include "toml.h"
 #include <stdio.h> // for file manipulation
 #include <X11/Xutil.h> //for XClassHint
 
-void saveMode() {
-	wmMode = SAVE;
+// cheap way of switching on string
+#define IF_KEY(c) if (!strcmp(keyval->key->str, c))
+
+void save_mode() {
+	wm_mode = SAVE;
 }
 
-// if a preset has already been defined for
-// the given hotkey, remove it from presets.toml
-void removeExistingPreset(const char *hotkey) {
+// if a layout has already been defined for
+// the given hotkey, remove it from layouts.toml
+void remove_existing_layout(const char *hotkey) {
 
 	FILE *fp;
-	fp = fopen("/home/theo/dev/CAbGC/presets.toml", "a");
+	fp = fopen("/home/theo/dev/autoly/layouts.toml", "a");
 
 	char buffer[300];
-	int startLine = -1;
+	int start_line = -1;
 
-	// for each line of presets.toml
+	// for each line of layouts.toml
 	for (int line = 0; fgets(buffer, sizeof(buffer), fp); line++) {
 		printf("buffer: %s\n", buffer);
 
 		// check if current line is equal to [<hotkey>], indicating start of
-		// an existing preset for the given hotkey
-		char hotkeyString[20];
-		snprintf(hotkeyString, sizeof(hotkeyString), "[%s]", hotkey);
-		printf("hotkeyString: %s\n", hotkeyString);
-		if (!strcmp(buffer, hotkeyString)) {
-			startLine = line;
+		// an existing layout for the given hotkey
+		char hotkey_string[20];
+		snprintf(hotkey_string, sizeof(hotkey_string), "[%s]", hotkey);
+		if (!strcmp(buffer, hotkey_string)) {
+			start_line = line;
 		}
-		// TODO free hotkeyString?
+		// TODO free hotkey_string?
 	}
 
 	// if no existing preset found, return
-	if (startLine == -1) {
+	if (start_line == -1) {
 		return;
 	}
 
 	rewind(fp);
-	FILE *tmpFile = fopen("/home/theo/dev/CAbGC/tmp.toml", "a");
+	FILE *tmp_file = fopen("/home/theo/dev/autoly/tmp.toml", "a");
 
 	// write other presets until the preset-to-remove to a tmp file
-	for (int i = 0; i < startLine; i++) {
+	for (int i = 0; i < start_line; i++) {
 		fgets(buffer, sizeof(buffer), fp); 
-		fprintf(tmpFile, "%s\n", buffer);
+		fprintf(tmp_file, "%s\n", buffer);
 	}
 
 	// until a new preset or EOF reached, move through lines without writing
@@ -56,18 +58,17 @@ void removeExistingPreset(const char *hotkey) {
 
 	// copy the rest of the presets to the tmp file
 	while (fgets(buffer, sizeof(buffer), fp)) {
-		fprintf(tmpFile, "%s\n", buffer);
+		fprintf(tmp_file, "%s\n", buffer);
 	}
 
 	// replace old presets file with new presets file
-	fclose(tmpFile);
+	fclose(tmp_file);
 	fclose(fp);
-	remove("/home/theo/dev/CAbGC/presets.toml");
-	rename("/home/theo/dev/CAbGC/tmp.toml", "/home/theo/dev/CAbGC/presets.toml");
+	remove("/home/theo/dev/autoly/layouts.toml");
+	rename("/home/theo/dev/autoly/tmp.toml", "/home/theo/dev/autoly/layouts.toml");
 }
 
-
-struct Application *loadApplication(TomlTable *table) {
+Application *load_application(TomlTable *table) {
 
 	TomlErr err = TOML_ERR_INIT;
 	TomlTableIter *it = toml_table_iter_new(table, &err);
@@ -78,49 +79,39 @@ struct Application *loadApplication(TomlTable *table) {
 	}
 
 
-	struct Application *app = malloc (sizeof (app));
+	Application *app = malloc (sizeof (app));
 
 	// each value of the keyvals refers to an attribute of the window
 	// assign the attribute to the relevant variable
 	while (toml_table_iter_has_next(it)) {
 		TomlKeyValue *keyval = toml_table_iter_get(it);
-		printf("checking key of: %s\n", keyval->key->str);
 
-		// really wish C could switch on strings...
-		if (!strcmp(keyval->key->str, "wm_class")) {
-			printf("assigning value of %s to wm_class: \n", keyval->value->value.string->str);
+		// switch on key of keyval
+		IF_KEY("wm_class") {
 			app->wm_class = keyval->value->value.string->str;
-		} else if (!strcmp(keyval->key->str, "width")) {
-			printf("assigning value of %ld to width: \n", keyval->value->value.integer);
+		} else IF_KEY("width") {
 			app->width = keyval->value->value.integer;
-		} else if (!strcmp(keyval->key->str, "height")) {
-			printf("assigning value of %ld to height: \n", keyval->value->value.integer);
+		} else IF_KEY("height") {
 			app->height = keyval->value->value.integer;
-		} else if (!strcmp(keyval->key->str, "x")) {
-			printf("assigning value of %ld to x: \n", keyval->value->value.integer);
+		} else IF_KEY("x") {
 			app->x = keyval->value->value.integer;
-		} else if (!strcmp(keyval->key->str, "y")) {
-			printf("assigning value of %ld to y: \n", keyval->value->value.integer);
+		} else IF_KEY("y") {
 			app->y = keyval->value->value.integer;
 		}
 
 		toml_table_iter_next(it);
 	}
 
-
-	printf("load app iter free\n");
 	toml_table_iter_free(it);
 	return app;
-
 }
 
-// t is the table referring to the activity (e.g. [d])
-struct Preset *loadPreset(TomlTable *table) {
+// t is the table referring to the workspace (e.g. [d])
+Layout *load_layout(TomlTable *table) {
 
 	TomlErr err = TOML_ERR_INIT;
 	TomlTableIter *it = toml_table_iter_new(table, &err);
 	if (err.code != TOML_OK) {
-		printf("loadpreset (singular) error and iter free\n");
 		toml_clear_err(&err);
 		toml_table_iter_free(it);
 		return NULL;
@@ -128,73 +119,66 @@ struct Preset *loadPreset(TomlTable *table) {
 
 	// create the head of the application list and save the 
 	// start of the list for later
-	struct Application *newApp = malloc (sizeof(newApp));
-	struct Application *applicationList = newApp;
+	Application *new_app = malloc (sizeof(new_app));
+	Application *app_list = new_app;
 
 	// each value of the keyvals is a table referring to one of the 
 	// applications in the preset (e.g. [d.window1])
 	while (toml_table_iter_has_next(it)) {
-		printf("LOADPRESET (SINGULAR) ITER\n");
 		TomlKeyValue *keyval = toml_table_iter_get(it);
 
 		// append application to end of list
-		newApp->next = loadApplication(keyval->value->value.table);
-		newApp = newApp->next;
+		new_app->next = load_application(keyval->value->value.table);
+		new_app = new_app->next;
 
 		toml_table_iter_next(it);
 	}
 
-	// return the preset
-	struct Preset *preset = malloc (sizeof (struct Preset));
+	// return the layout
+	Layout *layout = malloc (sizeof(Layout));
 	// preset->hotkey = hotkey;
-	preset->applicationList = *applicationList;
-	preset->next = NULL;
+	layout->app_list = *app_list;
+	layout->next = NULL;
 
-	printf("loadpreset (singular) iter free\n");
 	toml_table_iter_free(it);
 
-	return preset;
+	return layout;
 }
 
-void loadPresets() {
+void load_layouts() {
 
-	// load presets.toml into table
+	// load layouts.toml into table
 	TomlErr err = TOML_ERR_INIT;
-	TomlTable *table = toml_load_filename("/home/theo/dev/CAbGC/presets.toml", &err);
+	TomlTable *table = toml_load_filename("/home/theo/dev/autoly/layouts.toml", &err);
 	if (err.code != TOML_OK) goto cleanuptable;
 
 	TomlTableIter *it = toml_table_iter_new(table, &err);
 	if (err.code != TOML_OK) goto cleanupiter;
 
-	// used for appending to list of presets
-	struct Preset *currentPreset = &presets;
+	// used for appending to list of layouts
+	Layout *current_layout = &layouts;
 
-	// for each preset (e.g. [d]) in presets.toml...
+	// for each layout (e.g. [d]) in layouts.toml...
 	while (toml_table_iter_has_next(it)) {
 		TomlKeyValue *keyval = toml_table_iter_get(it);
-		// build the preset structure
-		// struct Preset *preset = loadPreset(keyval->value->table);
-		struct Preset *preset = loadPreset(keyval->value->value.table);
-		preset->hotkey =  keyval->key->str;
+		// build the layout structure
+		Layout *layout = load_layout(keyval->value->value.table);
+		layout->hotkey =  keyval->key->str;
 
 		// append preset to end of list
-		currentPreset->next = preset;
-		currentPreset = currentPreset->next;
+		current_layout->next = layout;
+		current_layout = current_layout->next;
 
 		toml_table_iter_next(it);
 	}
 
 	// free all used resources
 	cleanupiter:
-		printf("loadpresets iter free\n");
 		toml_table_iter_free(it);
 
 	cleanuptable:
-		printf("loadpresets table free\n");
 		// TODO toml_table_free(table);
-		printf("finished freeing table\n");
 		if (err.code != TOML_OK) {
-			printf("ERROR NOT OK\n");
 			fprintf(stderr, "toml: %d: %s\n", err.code, err.message);
 			toml_clear_err(&err);
 		}
@@ -202,11 +186,9 @@ void loadPresets() {
 	printf("finished loading presets, no errors\n");
 }
 
-// TODO use XGetClassHint
-char *getWMclass(Window win) {
-
+char *get_wm_class(Window win) {
 	// hint.res_name = application name
-	// hint.res_class = application name
+	// hint.res_class = application class
 	XClassHint hint;
 	int status = XGetClassHint(dpy, win, &hint);
 
@@ -221,30 +203,28 @@ char *getWMclass(Window win) {
 }
 
 // save current layout to specified hotkey
-void savePreset(const char *hotkey) {
+void save_layout(const char *hotkey) {
 
-	printf("saving preset!\n");
-
-	removeExistingPreset(hotkey);
+	remove_existing_layout(hotkey);
 
 	FILE *fp;
-	fp = fopen("/home/theo/dev/CAbGC/presets.toml", "a");
+	fp = fopen("/home/theo/dev/autoly/layouts.toml", "a");
 
 	// get file ready to enter each window
 	fprintf(fp, "[%s]\n", hotkey);
 
 	// get all mapped windows
-	Window dummy1, dummy2, *windowList;
-	unsigned int numWindows;
-	XQueryTree(dpy, DefaultRootWindow(dpy), &dummy1, &dummy2, &windowList, &numWindows);
+	Window dummy1, dummy2, *window_list;
+	unsigned int num_windows;
+	XQueryTree(dpy, DefaultRootWindow(dpy), &dummy1, &dummy2, &window_list, &num_windows);
 	
 	// write the properties of each mapped windows to presets.toml
-	for (int i=0; i<numWindows; i++) {
+	for (int i=0; i<num_windows; i++) {
 		int x, y;
 		unsigned int width, height, dummy3;
-		int status = XGetGeometry(dpy, windowList[i], &dummy1, &x, &y, &width, &height, &dummy3, &dummy3);
+		int status = XGetGeometry(dpy, window_list[i], &dummy1, &x, &y, &width, &height, &dummy3, &dummy3);
 		if (status != Success) goto cleanup;
-		char *wm_class = getWMclass(windowList[i]);
+		char *wm_class = get_wm_class(window_list[i]);
 
 		fprintf(fp, "\t[%s.window%d]\n", hotkey, i+1);
 		fprintf(fp, "\t# load_script = \"...\"\n");
@@ -259,7 +239,7 @@ void savePreset(const char *hotkey) {
 
 
 cleanup:
-	XFree(windowList);
+	XFree(window_list);
 	fclose(fp);
-	wmMode = NORMAL;
+	wm_mode = NORMAL;
 }

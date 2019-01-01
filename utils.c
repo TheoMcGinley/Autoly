@@ -1,97 +1,96 @@
-#include "CAbGC.h" 
+#include "autoly.h" 
 #include <X11/Xmd.h>
 
-void executeCommand(const char *command) {
+void execute_command(const char *command) {
 	if (fork() == 0) {
 		execl(_PATH_BSHELL, _PATH_BSHELL, "-c", command, NULL);
 	}
 }
 
 // determines whether the window provides the passed atom as available information
-Bool windowProvidesAtom(Window win, Atom a) {
+Bool window_provides_atom(Window win, Atom a) {
 
 	// iterate through window properties to determine if atom exists
-	int nProperties;
-	Bool providesAtom = False;
-	Atom *windowProperties = XListProperties(dpy, win, &nProperties);
-	for (int i=0; i<nProperties; i++) {
-		if (windowProperties[i] == a) {
-			providesAtom = True;
+	int num_properties;
+	Bool provides_atom = False;
+	Atom *window_properties = XListProperties(dpy, win, &num_properties);
+	for (int i=0; i<num_properties; i++) {
+		if (window_properties[i] == a) {
+			provides_atom = True;
 		}
 	}
-	XFree(windowProperties);
+	XFree(window_properties);
 
-	return providesAtom;
+	return provides_atom;
 }
 
-// giveBorder gives all regular windows a border, but doesn't
+// give_border gives all regular windows a border, but doesn't
 // give a border to dropdown menus, dialogue boxes etc.
-void giveBorder(Window win) {
+void give_border(Window win) {
 
 	// if the client does not specify its window type, give
 	// it a border by default
-	Atom windowType = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE", True);
-	if (!windowProvidesAtom(win, windowType)) {
+	Atom window_type = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE", True);
+	if (!window_provides_atom(win, window_type)) {
 		XSetWindowBorder(dpy, win, FOCUSBORDERCOLOR);
 		XSetWindowBorderWidth(dpy, win, BORDERTHICKNESS);
 		return;
 	}
 
-	Atom actualType;
-	int actualFormat, status;
-	unsigned long nItems, bytesAfter;
-	unsigned char *propReturn = NULL;
+	Atom actual_type;
+	int actual_format, status;
+	unsigned long num_items, bytes_after;
+	unsigned char *prop_return = NULL;
 	// adapted from xprop source code
-	status = XGetWindowProperty(dpy, win, windowType,
+	status = XGetWindowProperty(dpy, win, window_type,
 			0L, sizeof(Atom), False, AnyPropertyType,
-			&actualType, &actualFormat, &nItems, &bytesAfter,
-			&propReturn);
+			&actual_type, &actual_format, &num_items, &bytes_after,
+			&prop_return);
 
 	// if the query fails, do not give the window a border
 	if (status != Success) {
-		XFree(propReturn);
+		XFree(prop_return);
 		return;
 	}
 
 	// clients may specify multiple window types - if any of them specify
 	// that the window is a normal window, then give the window a border
 	Atom prop;
-	Atom NormalWindow = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_NORMAL", True);
-	for (int i=0; i<nItems; i++) {
-		prop = ((Atom *)propReturn)[i];
-		if (prop == NormalWindow) {
+	Atom normal_window = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_NORMAL", True);
+	for (int i=0; i<num_items; i++) {
+		prop = ((Atom *)prop_return)[i];
+		if (prop == normal_window) {
 			XSetWindowBorder(dpy, win, FOCUSBORDERCOLOR);
 			XSetWindowBorderWidth(dpy, win, BORDERTHICKNESS);
 		}
 	}
 
-	XFree(propReturn);
+	XFree(prop_return);
 	return;
 
 }
 
-Window getFocusedWindow() {
+Window get_focused_window() {
 	Window focused = None;
 	int revert;
 	XGetInputFocus(dpy, &focused, &revert);
 	return focused;
 }
 
-// if client acknowledges ICCCM's WM_DELETE_WINDOW, close it nicely, else KILL
-// Calling this will in turn call an unmap and/or window destruction, removing
-// it from the grid
-void destroyFocusedWindow() {
-	Window focused = getFocusedWindow();
+// if client acknowledges ICCCM's WM_DELETE_WINDOW, close it nicely
+// else KILL
+void destroy_focused_window() {
+	Window focused = get_focused_window();
 
 	//please don't try and kill the root window
 	if (focused == DefaultRootWindow(dpy)) return;
 
     int i, n, found = 0;
     Atom *protocols;
-    Atom wmDelete = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
+    Atom wm_delete = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
 
     if (XGetWMProtocols(dpy, focused, &protocols, &n)) {
-        for (i=0; i<n; i++) if (protocols[i] == wmDelete) found++;
+        for (i=0; i<n; i++) if (protocols[i] == wm_delete) found++;
         XFree(protocols);
     }
 

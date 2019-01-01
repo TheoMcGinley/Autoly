@@ -1,16 +1,16 @@
-#include "CAbGC.h"
+#include "autoly.h"
 #define GRAB_KEY(K)       XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym(K)), Mod1Mask, DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync)
 #define GRAB_SHIFT_KEY(K) XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym(K)), ShiftMask|Mod1Mask, DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync)
 #define GRAB_MOUSE_KEY(K) XGrabButton(dpy, K, Mod1Mask, DefaultRootWindow(dpy), True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
 
 Display * dpy;
-char currentActivity[10];
-enum wmMode wmMode;
-struct Preset presets;
-struct Keybind keybinds;
+char current_workspace[10];
+enum WMmode wm_mode;
+Layout layouts;
+Keybind keybinds;
 
 // fakeErrorHandler ensures that the wm does not halt on any errors
-int fakeErrorHandler(Display *d, XErrorEvent *e) {
+int fake_error_handler(Display *d, XErrorEvent *e) {
 	char msg[80];
 
 	XGetErrorText(d, e->error_code, msg, sizeof(msg));
@@ -27,7 +27,7 @@ static int init() {
 		return 0;
 	}
 
-	wmMode = NORMAL;
+	wm_mode = NORMAL;
 
 	// make all children of root give out notify events
 	XSelectInput (dpy, RootWindow(dpy, DefaultScreen(dpy)), SubstructureNotifyMask);
@@ -41,9 +41,9 @@ static int init() {
 	GRAB_KEY("Return"); 
 	GRAB_KEY("s"); // save layout
 	GRAB_KEY("l"); // load applications in layout
-	GRAB_KEY("d"); // development activity
-	GRAB_KEY("g"); // games activity
-	GRAB_KEY("b"); // browsing activity
+	GRAB_KEY("d"); // development workspace
+	GRAB_KEY("g"); // games workspace
+	GRAB_KEY("b"); // browsing workspace
 	GRAB_KEY("q"); // close focused window
 	GRAB_KEY("z"); // mpc next
 	GRAB_KEY("t"); // urxvt
@@ -61,16 +61,11 @@ static int init() {
 	GRAB_SHIFT_KEY("1");
 	GRAB_SHIFT_KEY("2");
 
-	loadPresets();
-	loadConfig();
-
-	// TODO this requires at least one preset defined on startup
-	// figure out a better solution
-	// move to the first defined preset
-	// strcpy(currentActivity, presets.hotkey);
+	load_layouts();
+	load_config();
 
 	// ensure mouse is ready to move windows
-	mouseRelease();
+	mouse_release();
 
 	// XSetErrorHandler(fakeErrorHandler);
 	return 1;
@@ -96,14 +91,14 @@ int main(int argc, char **argv) {
 		// process next XEvent (blocks until event found)
         XNextEvent(dpy, &ev);
 		switch (ev.type) {
-            case ButtonPress:   mousePress(&ev.xbutton);           break;
-            case ButtonRelease: mouseRelease();                    break;
-			case MotionNotify:  mouseMotion(&ev.xmotion);          break;
-			case KeyPress:      keyPress(&ev.xkey);                break;
-			case MapNotify:     windowMap(&ev.xmap);               break;
-            case UnmapNotify:   windowUnmap(&ev.xunmap);           break;
-			case DestroyNotify: windowDestroy(&ev.xdestroywindow); break;
-            case ClientMessage: handleMessage(&ev.xclient);        break;
+            case ButtonPress:   mouse_press(&ev.xbutton);           break;
+            case ButtonRelease: mouse_release();                    break;
+			case MotionNotify:  mouse_motion(&ev.xmotion);          break;
+			case KeyPress:      key_press(&ev.xkey);                break;
+			case MapNotify:     window_map(&ev.xmap);               break;
+            case UnmapNotify:   window_unmap(&ev.xunmap);           break;
+			case DestroyNotify: window_destroy(&ev.xdestroywindow); break;
+            case ClientMessage: handle_message(&ev.xclient);        break;
 		}
 
     }

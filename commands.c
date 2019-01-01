@@ -1,8 +1,11 @@
-#include "CAbGC.h"
+#include "autoly.h"
 #include <string.h>
 
+// cheap wayu of switching on string
 #define CASE(c) if (!strcmp(e->data.b, c))
 
+// sends argument supplied as a ClientMessage for the running instance
+// of autoly to receive and handle in handle_message
 void send_command(int argc, char **argv) {
 	if (!(dpy = XOpenDisplay(0x0))) {
 		return;
@@ -19,14 +22,11 @@ void send_command(int argc, char **argv) {
 	XFlush(dpy);
 }
 
-
-// handle messages sent to the wm for closing, focusing windows etc
-// running the command "cabgc close" will end up sending an event here
-// with e->data.b equal to "close"
-void handleMessage(XClientMessageEvent *e) {
+// processes messages sent from send_command
+void handle_message(XClientMessageEvent *e) {
 	// ICCCM requires iconify (hide)
-	Atom wmChangeState = XInternAtom(dpy, "WM_CHANGE_STATE", False);
-    if (e->message_type == wmChangeState &&
+	Atom wm_change_state = XInternAtom(dpy, "WM_CHANGE_STATE", False);
+    if (e->message_type == wm_change_state &&
 			e->format == 32 && e->data.l[0] == IconicState) {
 		// TODO hide(e->window);
 		return;
@@ -34,11 +34,10 @@ void handleMessage(XClientMessageEvent *e) {
 	
 	CASE("save") {
 		printf("entering save mode...\n");
-		saveMode();
+		save_mode();
 	} else CASE("load") {
 		printf("loading applications...\n");
 	} else CASE("close") {
-		destroyFocusedWindow();
+		destroy_focused_window();
 	}
-
 }
