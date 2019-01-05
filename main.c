@@ -21,6 +21,83 @@ int fake_error_handler(Display *d, XErrorEvent *e) {
 	return 0;
 }
 
+// not pretty but functional - saves having to redirect 
+// XSelectInput wheneiver a client grabs the keyboard
+// DWM takes the same approach
+static void grab_peripherals() {
+	// grab left and right click
+	GRAB_MOUSE_KEY(1);
+	GRAB_MOUSE_KEY(3);
+
+	// grab necessary keyboard keys
+	GRAB_KEY("a");
+	GRAB_KEY("b");
+	GRAB_KEY("c");
+	GRAB_KEY("d");
+	GRAB_KEY("e");
+	GRAB_KEY("f");
+	GRAB_KEY("g");
+	GRAB_KEY("h");
+	GRAB_KEY("i");
+	GRAB_KEY("j");
+	GRAB_KEY("k");
+	GRAB_KEY("l");
+	GRAB_KEY("m");
+	GRAB_KEY("n");
+	GRAB_KEY("o");
+	GRAB_KEY("p");
+	GRAB_KEY("q");
+	GRAB_KEY("r");
+	GRAB_KEY("s");
+	GRAB_KEY("t");
+	GRAB_KEY("u");
+	GRAB_KEY("v");
+	GRAB_KEY("w");
+	GRAB_KEY("x");
+	GRAB_KEY("y");
+	GRAB_KEY("z");
+
+	GRAB_KEY("1");
+	GRAB_KEY("2");
+	GRAB_KEY("3");
+	GRAB_KEY("4");
+	GRAB_KEY("5");
+	GRAB_KEY("6");
+	GRAB_KEY("7");
+	GRAB_KEY("8");
+	GRAB_KEY("9");
+	GRAB_KEY("0");
+
+	GRAB_KEY("F1");
+	GRAB_KEY("F2");
+	GRAB_KEY("F3");
+	GRAB_KEY("F4");
+	GRAB_KEY("F5");
+	GRAB_KEY("F6");
+	GRAB_KEY("F7");
+	GRAB_KEY("F8");
+	GRAB_KEY("F9");
+	GRAB_KEY("F10");
+	GRAB_KEY("F11");
+	GRAB_KEY("F12");
+
+	GRAB_KEY("semicolon");
+	GRAB_KEY("comma");
+	GRAB_KEY("period");
+	GRAB_KEY("slash");
+	GRAB_KEY("apostrophe");
+
+	GRAB_KEY("Return"); 
+	GRAB_KEY("Escape"); 
+	GRAB_KEY("BackSpace"); 
+	GRAB_KEY("Tab");
+	GRAB_KEY("Insert"); 
+	GRAB_KEY("Delete"); 
+	GRAB_KEY("Prior"); // PG UP
+	GRAB_KEY("Next");  // PG DOWN
+	GRAB_KEY("space");
+}
+
 static int init() {
 
     if(!(dpy = XOpenDisplay(0x0))) {
@@ -33,34 +110,7 @@ static int init() {
 	XSelectInput (dpy, RootWindow(dpy, DefaultScreen(dpy)), SubstructureNotifyMask);
 	XSetInputFocus(dpy, RootWindow(dpy, DefaultScreen(dpy)), RevertToPointerRoot, CurrentTime);
 
-	// grab left and right click
-	GRAB_MOUSE_KEY(1);
-	GRAB_MOUSE_KEY(3);
-
-	// grab necessary keyboard keys
-	GRAB_KEY("Return"); 
-	GRAB_KEY("s"); // save layout
-	GRAB_KEY("l"); // load applications in layout
-	GRAB_KEY("d"); // development workspace
-	GRAB_KEY("g"); // games workspace
-	GRAB_KEY("b"); // browsing workspace
-	GRAB_KEY("q"); // close focused window
-	GRAB_KEY("z"); // mpc next
-	GRAB_KEY("t"); // urxvt
-	GRAB_KEY("1");
-	GRAB_KEY("2");
-	GRAB_KEY("3");
-	GRAB_KEY("4");
-	GRAB_KEY("5");
-	GRAB_KEY("6");
-	GRAB_KEY("7");
-	GRAB_KEY("8");
-	GRAB_KEY("9");
-	GRAB_KEY("0");
-
-	GRAB_SHIFT_KEY("1");
-	GRAB_SHIFT_KEY("2");
-
+	grab_peripherals();
 	load_layouts();
 	load_config();
 

@@ -1,6 +1,5 @@
 #include "autoly.h"
-#include <X11/Xutil.h> // needed for XLookupString
-// note: use xev to find keycodes for each key
+#include <X11/XKBlib.h> // needed for XkbKeycodeToKeysym
 
 // if the given key is mapped to a command, execute the command
 int config_command(char *key_name) {
@@ -31,13 +30,7 @@ int is_workspace(char *key_name) {
 
 // handle key presses when MOD held
 void key_press(XKeyEvent *e) {
-	// translate key event into the name of the key pressed as a string
-	char key_name[10];
-	KeySym dummy1;
-	XComposeStatus dummy2;
-	XLookupString(e, key_name, 10, &dummy1, &dummy2);
-	printf("KEY PRESSED: %s\n", key_name);
-	printf("KEY PRESSED: %s\n", XKeysymToString(XKeycodeToKeysym(dpy, e->keycode, 0)));
+	char *key_name = XKeysymToString(XkbKeycodeToKeysym(dpy, e->keycode, 0, 0));
 
 	// handle users saving a layout to a hotkey
 	if (wm_mode == SAVE) {
@@ -47,7 +40,6 @@ void key_press(XKeyEvent *e) {
 
 	// if key is mapped to a config command, execute that command
 	if (config_command(key_name)) {
-		// TODO free key_name?
 		return;
 	}
 
@@ -56,6 +48,4 @@ void key_press(XKeyEvent *e) {
 		switch_to_workspace(key_name);
 		return;
 	}
-
-	//TODO free resources used for XLookupString?
 }

@@ -5,6 +5,9 @@
 
 // cheap way of switching on string
 #define IF_KEY(c) if (!strcmp(keyval->key->str, c))
+// removes -Wunused-result warnings in GCC
+# define ignore_value(x) \
+    (__extension__ ({ __typeof__ (x) __x = (x); (void) __x; }))
 
 void save_mode() {
 	wm_mode = SAVE;
@@ -44,7 +47,7 @@ void remove_existing_layout(const char *hotkey) {
 
 	// write other presets until the preset-to-remove to a tmp file
 	for (int i = 0; i < start_line; i++) {
-		fgets(buffer, sizeof(buffer), fp); 
+		ignore_value(fgets(buffer, sizeof(buffer), fp));
 		fprintf(tmp_file, "%s\n", buffer);
 	}
 
@@ -52,7 +55,7 @@ void remove_existing_layout(const char *hotkey) {
 	// them to the tmp file (crude form of line deletion)
 	// this works as all lines except new preset declarations start with a tab
 	while (strncmp(buffer, "[", 1) || fgets(buffer, sizeof(buffer), fp)) {
-		fgets(buffer, sizeof(buffer), fp); 
+		ignore_value(fgets(buffer, sizeof(buffer), fp));
 	}
 
 
