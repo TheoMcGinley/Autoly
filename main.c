@@ -107,12 +107,15 @@ static int init() {
 	wm_mode = NORMAL;
 
 	// make all children of root give out notify events
-	XSelectInput (dpy, RootWindow(dpy, DefaultScreen(dpy)), SubstructureNotifyMask);
+	XSelectInput(dpy, RootWindow(dpy, DefaultScreen(dpy)), SubstructureNotifyMask);
 	XSetInputFocus(dpy, RootWindow(dpy, DefaultScreen(dpy)), RevertToPointerRoot, CurrentTime);
 
 	grab_peripherals();
 	load_layouts();
 	load_config();
+
+	// use first layout as start-up workspace
+	strcpy(current_workspace, layouts.next->hotkey);
 
 	// ensure mouse is ready to move windows
 	mouse_release();

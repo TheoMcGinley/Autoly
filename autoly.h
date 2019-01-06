@@ -95,6 +95,7 @@ extern void mouse_motion(XMotionEvent *);
 extern void save_mode();
 extern void load_layouts();
 extern void save_layout(const char *);
+extern char *get_wm_class(Window);
 
 // utils.c 
 extern void   execute_command(const char *);

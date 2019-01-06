@@ -7,14 +7,15 @@ void window_map(XMapEvent *e) {
 		give_border(e->window);
 		add_to_map(e->window, current_workspace);
 
-		// TODO get wmclass of e->window
-		// compare wmclass against all applications in current_workspace presets
-		// if wmclass matches, move dimensions to fit preset
-		/* struct Layout *l = &layouts;
+		// if the WM_CLASS of the new window matches any in the layout,
+		// change the geometry of the window to fit the layout
+		char *class = get_wm_class(e->window);
+		Layout *l = &layouts;
 		while (l.next != NULL) {
 			l = l->next;
-			...
-		} */
+		}
+
+		XFree(class);
 		// TODO if new window fits the description of one of the 
 		// applications in the current workspace's preset
 		// (e.g. _NET_WM_NAME == "Mozilla Firefox") 
