@@ -86,7 +86,6 @@ extern void switch_to_layout(char *);
 extern void move_focused_to_layout(char *);
 extern Layout *get_layout(char *);
 
-
 // mouse.c
 extern void mouse_press(XButtonEvent *);
 extern void mouse_release();
@@ -96,12 +95,13 @@ extern void mouse_motion(XMotionEvent *);
 extern void save_mode();
 extern void load_layouts();
 extern void save_layout(const char *);
-extern char *get_wm_class(Window);
+extern void new_layout(const char *);
 
 // utils.c 
 extern void   execute_command(const char *);
 extern void   give_border(Window);
 extern void   destroy_focused_window();
+extern char   *get_wm_class(Window);
 extern Window get_focused_window();
 extern Bool   window_provides_atom(Window, Atom);
 

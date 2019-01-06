@@ -13,6 +13,13 @@ void save_mode() {
 	wm_mode = SAVE;
 }
 
+void new_layout(const char *hotkey) {
+	FILE *fp;
+	fp = fopen("/home/theo/dev/autoly/layouts.toml", "a");
+	fprintf(fp, "[%s]\n", hotkey);
+	fclose(fp);
+}
+
 // if a layout has already been defined for
 // the given hotkey, remove it from layouts.toml
 void remove_existing_layout(const char *hotkey) {
@@ -190,22 +197,6 @@ void load_layouts() {
 	printf("finished loading presets, no errors\n");
 }
 
-char *get_wm_class(Window win) {
-	// hint.res_name = application name
-	// hint.res_class = application class
-	XClassHint hint;
-	int status = XGetClassHint(dpy, win, &hint);
-
-	if (!status) {
-		XFree(hint.res_name);
-		XFree(hint.res_class);
-		return NULL;
-	}
-
-	XFree(hint.res_name);
-	return hint.res_class;
-}
-
 // save current layout to specified hotkey
 void save_layout(const char *hotkey) {
 
@@ -224,20 +215,27 @@ void save_layout(const char *hotkey) {
 	
 	// write the properties of each mapped windows to presets.toml
 	for (int i=0; i<num_windows; i++) {
-		int x, y;
-		unsigned int width, height, dummy3;
-		int status = XGetGeometry(dpy, window_list[i], &dummy1, &x, &y, &width, &height, &dummy3, &dummy3);
+
+		XWindowAttributes attr;
+		int status = XGetWindowAttributes(dpy, window_list[i], &attr);
 		if (!status) goto cleanup;
+
+		// ignore non-mapped windows
+		if (attr.map_state != IsViewable) {
+			continue;
+		}
+
+
 
 		char *wm_class = get_wm_class(window_list[i]);
 
 		fprintf(fp, "\t[%s.window%d]\n", hotkey, i+1);
 		fprintf(fp, "\t# load_script = \"...\"\n");
 		fprintf(fp, "\twm_class = \"%s\"\n", wm_class);
-		fprintf(fp, "\twidth = \"%d\"\n", width);
-		fprintf(fp, "\theight = \"%d\"\n", height);
-		fprintf(fp, "\tx = \"%d\"\n", x);
-		fprintf(fp, "\ty = \"%d\"\n\n", y);
+		fprintf(fp, "\twidth = %d\n", attr.width);
+		fprintf(fp, "\theight = %d\n", attr.height);
+		fprintf(fp, "\tx = %d\n", attr.x);
+		fprintf(fp, "\ty = %d\n\n", attr.y);
 
 		XFree(wm_class);
 	}

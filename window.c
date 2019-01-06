@@ -20,14 +20,19 @@ Bool window_position_occupied(int x, int y, Window win_to_ignore) {
 			continue;
 		}
 
-		int win_x = -1, win_y = -1;
-		unsigned int width, height, dummy3;
-		int status = XGetGeometry(dpy, window_list[i], &dummy1, &win_x, &win_y, &width, &height, &dummy3, &dummy3);
-
-		printf("window %d x and y: %d, %d\n", i, win_x, win_y);
+		XWindowAttributes attr;
+		int status = XGetWindowAttributes(dpy, window_list[i], &attr);
 		if (!status) goto cleanup;
 
-		if (win_x == x && win_y == y) {
+		// ignore non-mapped windows
+		if (attr.map_state != IsViewable) {
+			continue;
+		}
+
+		printf("window %d x and y: %d, %d\n", i, attr.x, attr.y);
+		if (!status) goto cleanup;
+
+		if (attr.x == x && attr.y == y) {
 			printf("it's occupied!\n");
 			is_occupied	= True;
 			break;
@@ -50,7 +55,7 @@ void window_map(XMapEvent *e) {
 		// change the geometry of the window to fit the layout
 		char *class = get_wm_class(e->window);
 		Application *apps = current_layout->app_list;
-
+		Bool window_moved = False;
 		while (apps->next != NULL) {
 			apps = apps->next;
 
@@ -60,11 +65,20 @@ void window_map(XMapEvent *e) {
 			!window_position_occupied(apps->x, apps->y, e->window)) {
 				XMoveResizeWindow(dpy, e->window,
 				apps->x, apps->y, apps->width, apps->height);
+				window_moved = True;
 				break;
 			}
 		}
-
 		XFree(class);
+
+		// if window has not been moved by the layout, move it to the centre
+		if (!window_moved) {
+			XWindowAttributes attr;
+			if (XGetWindowAttributes(dpy, e->window, &attr)) {
+				XMoveWindow(dpy, e->window, XDisplayWidth(dpy, DefaultScreen(dpy))/2 - attr.width,
+				XDisplayHeight(dpy, DefaultScreen(dpy))/2 - attr.height);
+			}
+		}
 	}
 
 	// focus new window

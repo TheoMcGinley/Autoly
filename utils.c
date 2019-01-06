@@ -1,5 +1,21 @@
 #include "autoly.h" 
 #include <X11/Xmd.h>
+#include <X11/Xutil.h>
+char *get_wm_class(Window win) {
+	// hint.res_name = application name
+	// hint.res_class = application class
+	XClassHint hint;
+	int status = XGetClassHint(dpy, win, &hint);
+
+	if (!status) {
+		XFree(hint.res_name);
+		XFree(hint.res_class);
+		return NULL;
+	}
+
+	XFree(hint.res_name);
+	return hint.res_class;
+}
 
 void execute_command(const char *command) {
 	if (fork() == 0) {
