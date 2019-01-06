@@ -1,12 +1,12 @@
 #include "autoly.h"
 #define GRAB_KEY(K)       XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym(K)), Mod1Mask, DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync)
 #define GRAB_SHIFT_KEY(K) XGrabKey(dpy, XKeysymToKeycode(dpy, XStringToKeysym(K)), ShiftMask|Mod1Mask, DefaultRootWindow(dpy), True, GrabModeAsync, GrabModeAsync)
-#define GRAB_MOUSE_KEY(K) XGrabButton(dpy, K, Mod1Mask, DefaultRootWindow(dpy), True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
+#define GRAB_MOUSE_KEY(K) XGrabButton(dpy, K, AnyModifier, DefaultRootWindow(dpy), True, ButtonPressMask|ButtonReleaseMask|PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None)
 
-Display * dpy;
-char current_workspace[10];
+Display *dpy;
 enum WMmode wm_mode;
 Layout layouts;
+Layout *current_layout;
 Keybind keybinds;
 
 // fakeErrorHandler ensures that the wm does not halt on any errors
@@ -115,7 +115,7 @@ static int init() {
 	load_config();
 
 	// use first layout as start-up workspace
-	strcpy(current_workspace, layouts.next->hotkey);
+	current_layout = layouts.next;
 
 	// ensure mouse is ready to move windows
 	mouse_release();

@@ -22,6 +22,10 @@ void send_command(int argc, char **argv) {
 	XFlush(dpy);
 }
 
+Bool str_starts_with(const char *str, const char *pre) {
+    return strncmp(pre, str, strlen(pre)) == 0;
+}
+
 // processes messages sent from send_command
 void handle_message(XClientMessageEvent *e) {
 	// ICCCM requires iconify (hide)
@@ -31,7 +35,7 @@ void handle_message(XClientMessageEvent *e) {
 		// TODO hide(e->window);
 		return;
 	}
-	
+
 	CASE("save") {
 		printf("entering save mode...\n");
 		save_mode();
@@ -39,5 +43,11 @@ void handle_message(XClientMessageEvent *e) {
 		printf("loading applications...\n");
 	} else CASE("close") {
 		destroy_focused_window();
+	} else if (str_starts_with(e->data.b, "focus")) {
+		int win_num = atoi(e->data.b+5);
+		// if conversion successful, focus specified window
+		if (win_num) {
+			focus_window_by_number(win_num);
+		}
 	}
 }

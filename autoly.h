@@ -57,8 +57,8 @@ typedef struct _Keybind {
 enum WMmode {NORMAL, SAVE};
 
 extern Display * dpy;
-extern char current_workspace[10];
 extern enum WMmode wm_mode;
+extern Layout *current_layout;
 extern Layout layouts;
 extern Keybind keybinds;
 
@@ -79,11 +79,12 @@ extern void key_press(XKeyEvent *);
 // map.c
 extern void add_to_map(Window, char *);
 extern void remove_from_map(Window);
-extern char *get_workspace_id(Window);
+extern char *get_hotkey(Window);
 extern int  exists_in_map(Window);
 extern void free_map();
-extern void switch_to_workspace(char *);
-extern void move_focused_to_workspace(char *);
+extern void switch_to_layout(char *);
+extern void move_focused_to_layout(char *);
+extern Layout *get_layout(char *);
 
 
 // mouse.c

@@ -83,6 +83,7 @@ Application *load_application(TomlTable *table) {
 
 
 	Application *app = malloc (sizeof (app));
+	app->next = NULL;
 
 	// each value of the keyvals refers to an attribute of the window
 	// assign the attribute to the relevant variable
@@ -195,7 +196,7 @@ char *get_wm_class(Window win) {
 	XClassHint hint;
 	int status = XGetClassHint(dpy, win, &hint);
 
-	if (status != Success) {
+	if (!status) {
 		XFree(hint.res_name);
 		XFree(hint.res_class);
 		return NULL;
@@ -226,7 +227,8 @@ void save_layout(const char *hotkey) {
 		int x, y;
 		unsigned int width, height, dummy3;
 		int status = XGetGeometry(dpy, window_list[i], &dummy1, &x, &y, &width, &height, &dummy3, &dummy3);
-		if (status != Success) goto cleanup;
+		if (!status) goto cleanup;
+
 		char *wm_class = get_wm_class(window_list[i]);
 
 		fprintf(fp, "\t[%s.window%d]\n", hotkey, i+1);

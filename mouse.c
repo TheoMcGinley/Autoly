@@ -10,13 +10,19 @@ void mouse_press(XButtonEvent *e) {
 		return;
 	}
 
+	// raise and focus window
+	XRaiseWindow(dpy, e->subwindow);
+	focus_window_by_id(e->subwindow);
+
+	// if Mod1 not held, don't move/resize
+	if (!(e->state & Mod1Mask)) {
+		return;
+	}
+
 	// save pointer position for moving/resizing purposes
 	XGetWindowAttributes(dpy, e->subwindow, &attr);
 	pointer_origin = *e;
 
-	// raise and focus window
-	XRaiseWindow(dpy, e->subwindow);
-	focus_window_by_id(e->subwindow);
 }
 
 void mouse_release() {
@@ -25,6 +31,11 @@ void mouse_release() {
 
 // thanks tinywm!
 void mouse_motion(XMotionEvent *e) {
+	// if Mod1 not held, don't move/resize
+	if (!(e->state & Mod1Mask)) {
+		return;
+	}
+
 	// compress motion notify events down to most recent
 	// while(XCheckTypedEvent(dpy, MotionNotify, &e));
 

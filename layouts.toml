@@ -13,6 +13,13 @@
 	x = 1200
 	y = 600
 
+	[d.window3]
+	wm_class = "URxvt"
+	width = 600
+	height = 400
+	x = 1800
+	y = 600
+
 [g]
 	[g.window1]
 	wm_class = "Firefox"

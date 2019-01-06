@@ -3,25 +3,26 @@
 
 typedef struct _MapElement {
 	int key; // windowID
-	char value[10]; // workspace name
+	char value[10]; // hotkey name
 	UT_hash_handle hh; // make the struct hashable
 } MapElement;
 
 static MapElement *map = NULL;
 
-void add_to_map(Window win, char* workspace) {
+// associate window with hotkey
+void add_to_map(Window win, char* hotkey) {
 	MapElement *ele;
 	int window_id = (int)win;
 
 	// if key already exists in the map, just change 
-	// the workspace it points to, else add it to the map
+	// the hotkey it points to, else add it to the map
 	HASH_FIND_INT(map, &window_id, ele);
 	if (ele == NULL) {
 		ele = malloc(sizeof(MapElement));
 		ele->key = window_id;
 		HASH_ADD_INT(map, key, ele);
 	}
-	strcpy(ele->value, workspace);
+	strcpy(ele->value, hotkey);
 }
 
 
@@ -38,13 +39,26 @@ void remove_from_map(Window win) {
 	free(ele);
 }
 
-// return the workspace ID that the window is associated with
-char* get_workspace_id(Window win) {
+// return the hotkey associated with the given window
+char* get_hotkey(Window win) {
 	MapElement *ele;
 	int window_id = (int)win;
 
 	HASH_FIND_INT(map, &window_id, ele);
 	return ele->value;
+}
+
+// return a pointer to layout of hotkey, or
+// NULL if no layout with the given hotkey exists
+Layout* get_layout(char *hotkey) {
+	Layout *l = &layouts;
+	while (l->next != NULL) {
+		l = l->next;
+		if (!strcmp(l->hotkey, hotkey)) {
+			return l;
+		}
+	}
+	return NULL;
 }
 
 // inform caller if the specified windows exists in the map
@@ -68,31 +82,31 @@ void free_map() {
 	}
 }
 
-void switch_to_workspace(char* workspace_id) {
-	printf("switching to workspace: %s\n", workspace_id);
+void switch_to_layout(char* hotkey) {
+	printf("switching to layout: %s\n", hotkey);
 
-	// don't do anything if switching to same workspace
-	if (!strcmp(workspace_id, current_workspace)) {
+	// don't do anything if switching to current layout
+	if (!strcmp(hotkey, current_layout->hotkey)) {
 		return;
 	}
 
 	// unmap all mapped windows
 	XUnmapSubwindows(dpy, DefaultRootWindow(dpy));
 
-	// update currentworkspace
-	strcpy(current_workspace, workspace_id);
+	// update current layout
+	current_layout = get_layout(hotkey);
 
 	MapElement *ele;
 
 	// iterate through map, mapping all windows 
-	// associated with the new workspace
+	// associated with the new layout
 	for (ele=map; ele != NULL; ele=ele->hh.next) {
-		if (!strcmp(ele->value, current_workspace)) {
+		if (!strcmp(ele->value, current_layout->hotkey)) {
 			XMapWindow(dpy, ele->key);
 		}
 	}
 }
 
-void move_focused_to_workspace(char *workspace_id) {
+void move_focused_to_layout(char *hotkey) {
 
 }

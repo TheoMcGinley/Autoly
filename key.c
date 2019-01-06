@@ -44,8 +44,9 @@ void key_press(XKeyEvent *e) {
 	}
 
 	// if key is a layout defined in layouts.toml, switch to it
-	if (is_workspace(key_name)) {
-		switch_to_workspace(key_name);
+	// if (is_workspace(key_name)) {
+	if (get_layout(key_name) != NULL) {
+		switch_to_layout(key_name);
 		return;
 	}
 }
