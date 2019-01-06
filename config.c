@@ -19,7 +19,7 @@ void load_config() {
 		// parse the mapping into a Keybind struct
 		TomlKeyValue *keyval = toml_table_iter_get(it);
 
-		Keybind *kb = malloc (sizeof(kb));
+		Keybind *kb = malloc (sizeof(Keybind));
 		kb->hotkey = keyval->key->str;
 		kb->command = keyval->value->value.string->str;
 

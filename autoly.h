@@ -40,7 +40,7 @@ typedef struct _Application {
 
 typedef struct _Layout {
 	char *hotkey;
-	Application app_list;
+	Application *app_list;
 	struct _Layout *next;
 } Layout;
 

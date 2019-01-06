@@ -82,7 +82,7 @@ Application *load_application(TomlTable *table) {
 	}
 
 
-	Application *app = malloc (sizeof (app));
+	Application *app = malloc(sizeof(Application));
 	app->next = NULL;
 
 	// each value of the keyvals refers to an attribute of the window
@@ -123,7 +123,7 @@ Layout *load_layout(TomlTable *table) {
 
 	// create the head of the application list and save the 
 	// start of the list for later
-	Application *new_app = malloc (sizeof(new_app));
+	Application *new_app = malloc(sizeof(Application));
 	Application *app_list = new_app;
 
 	// each value of the keyvals is a table referring to one of the 
@@ -139,9 +139,9 @@ Layout *load_layout(TomlTable *table) {
 	}
 
 	// return the layout
-	Layout *layout = malloc (sizeof(Layout));
+	Layout *layout = malloc(sizeof(Layout));
 	// preset->hotkey = hotkey;
-	layout->app_list = *app_list;
+	layout->app_list = app_list;
 	layout->next = NULL;
 
 	toml_table_iter_free(it);
@@ -217,7 +217,7 @@ void save_layout(const char *hotkey) {
 	// get file ready to enter each window
 	fprintf(fp, "[%s]\n", hotkey);
 
-	// get all mapped windows
+	// get all windows
 	Window dummy1, dummy2, *window_list;
 	unsigned int num_windows;
 	XQueryTree(dpy, DefaultRootWindow(dpy), &dummy1, &dummy2, &window_list, &num_windows);

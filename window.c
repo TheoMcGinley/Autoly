@@ -49,7 +49,7 @@ void window_map(XMapEvent *e) {
 		// if the WM_CLASS of the new window matches any in the layout,
 		// change the geometry of the window to fit the layout
 		char *class = get_wm_class(e->window);
-		Application *apps = &current_layout->app_list;
+		Application *apps = current_layout->app_list;
 
 		while (apps->next != NULL) {
 			apps = apps->next;
