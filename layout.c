@@ -32,7 +32,6 @@ void remove_existing_layout(const char *hotkey) {
 
 	// for each line of layouts.toml
 	for (int line = 0; fgets(buffer, sizeof(buffer), fp); line++) {
-		printf("buffer: %s\n", buffer);
 
 		// check if current line is equal to [<hotkey>], indicating start of
 		// an existing layout for the given hotkey
@@ -82,9 +81,10 @@ Application *load_application(TomlTable *table) {
 
 	TomlErr err = TOML_ERR_INIT;
 	TomlTableIter *it = toml_table_iter_new(table, &err);
+	// if error not TOML_OK, it is always NULL
 	if (err.code != TOML_OK) {
+		debug_log("layout.c: load_application: toml_table_iter_new failed\n");
 		toml_clear_err(&err);
-		toml_table_iter_free(it);
 		return NULL;
 	}
 
@@ -113,6 +113,7 @@ Application *load_application(TomlTable *table) {
 		toml_table_iter_next(it);
 	}
 
+	debug_log("layout.c: load_application: freeing table iter\n");
 	toml_table_iter_free(it);
 	return app;
 }
@@ -123,8 +124,8 @@ Layout *load_layout(TomlTable *table) {
 	TomlErr err = TOML_ERR_INIT;
 	TomlTableIter *it = toml_table_iter_new(table, &err);
 	if (err.code != TOML_OK) {
+		debug_log("layout.c: load_layout: toml_table_iter_new failed\n");
 		toml_clear_err(&err);
-		toml_table_iter_free(it);
 		return NULL;
 	}
 
@@ -151,6 +152,7 @@ Layout *load_layout(TomlTable *table) {
 	layout->app_list = app_list;
 	layout->next = NULL;
 
+	debug_log("layout.c: load_layout: freeing table iter\n");
 	toml_table_iter_free(it);
 
 	return layout;
@@ -185,6 +187,7 @@ void load_layouts() {
 
 	// free all used resources
 	cleanupiter:
+		debug_log("layout.c: load_layouts: freeing table iter\n");
 		toml_table_iter_free(it);
 
 	cleanuptable:
@@ -194,7 +197,6 @@ void load_layouts() {
 			toml_clear_err(&err);
 		}
 
-	printf("finished loading presets, no errors\n");
 }
 
 // save current layout to specified hotkey
@@ -237,12 +239,18 @@ void save_layout(const char *hotkey) {
 		fprintf(fp, "\tx = %d\n", attr.x);
 		fprintf(fp, "\ty = %d\n\n", attr.y);
 
-		XFree(wm_class);
+		if (wm_class != NULL) {
+			debug_log("layout.c: save_layout: freeing wm_class\n");
+			XFree(wm_class);
+		}
 	}
 
 
 cleanup:
-	XFree(window_list);
+	if (window_list != NULL) {
+		debug_log("layout.c: save_layout: freeing window_list\n");
+		XFree(window_list);
+	}
 	fclose(fp);
 	wm_mode = NORMAL;
 }

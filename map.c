@@ -78,6 +78,7 @@ void free_map() {
 	MapElement *ele, *tmp;
 	HASH_ITER(hh, map, ele, tmp) {
 		HASH_DEL(map, ele);  /* delete; users advances to next */
+		printf("TODO REMOVE ME; free_map free\n");
 		free(ele);            /* optional- if you want to free  */
 	}
 }

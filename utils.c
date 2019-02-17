@@ -1,6 +1,21 @@
 #include "autoly.h" 
 #include <X11/Xmd.h>
 #include <X11/Xutil.h>
+
+#include <stdarg.h> //for va_start/end
+void debug_log(const char *fmt, ...) {
+	FILE* logfile = fopen("/home/theo/autoly_debug.txt", "a");
+	if (logfile == NULL) {
+		return;
+	}
+
+	va_list args;
+	va_start(args, fmt);
+	vfprintf(logfile, fmt, args);
+	va_end(args);
+	fclose(logfile);
+}
+
 char *get_wm_class(Window win) {
 	// hint.res_name = application name
 	// hint.res_class = application class
@@ -8,11 +23,13 @@ char *get_wm_class(Window win) {
 	int status = XGetClassHint(dpy, win, &hint);
 
 	if (!status) {
-		XFree(hint.res_name);
-		XFree(hint.res_class);
+		// TODO need to free on non-zero status?
+		// XFree(hint.res_name);
+		// XFree(hint.res_class);
 		return NULL;
 	}
 
+	printf("TODO REMOVE ME; get_wm_class XFREE2\n");
 	XFree(hint.res_name);
 	return hint.res_class;
 }
@@ -35,9 +52,16 @@ Bool window_provides_atom(Window win, Atom a) {
 			provides_atom = True;
 		}
 	}
-	XFree(window_properties);
+
+	if (window_properties != NULL) {
+		XFree(window_properties);
+	}
 
 	return provides_atom;
+}
+
+Bool is_normal_window(Window win) {
+
 }
 
 // give_border gives all regular windows a border, but doesn't
@@ -65,6 +89,7 @@ void give_border(Window win) {
 
 	// if the query fails, do not give the window a border
 	if (status != Success) {
+		printf("TODO REMOVE ME; give_border XFREE\n");
 		XFree(prop_return);
 		return;
 	}
@@ -81,10 +106,13 @@ void give_border(Window win) {
 		}
 	}
 
+	printf("TODO REMOVE ME; give_border XFREE2\n");
 	XFree(prop_return);
 	return;
 
 }
+
+
 
 Window get_focused_window() {
 	Window focused = None;
@@ -107,6 +135,7 @@ void destroy_focused_window() {
 
     if (XGetWMProtocols(dpy, focused, &protocols, &n)) {
         for (i=0; i<n; i++) if (protocols[i] == wm_delete) found++;
+		printf("TODO REMOVE ME; destroy_focused_window XFREE\n");
         XFree(protocols);
     }
 

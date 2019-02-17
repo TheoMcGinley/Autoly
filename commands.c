@@ -37,10 +37,10 @@ void handle_message(XClientMessageEvent *e) {
 	}
 
 	CASE("save") {
-		printf("entering save mode...\n");
+		debug_log("util.c: handle_message: entering save mode...\n");
 		save_mode();
 	} else CASE("load") {
-		printf("loading applications...\n");
+		debug_log("util.c: handle_message: loading applications...\n");
 	} else CASE("close") {
 		destroy_focused_window();
 	} else if (str_starts_with(e->data.b, "focus")) {

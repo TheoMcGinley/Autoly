@@ -3,6 +3,7 @@
 // determine if the given position already has a window in,
 // not accounting for the new window that has just been created
 Bool window_position_occupied(int x, int y, Window win_to_ignore) {
+	debug_log("window.c: window_position_occupied: checking...\n");
 	// assume position not occupied
 	Bool is_occupied = False;
 
@@ -11,12 +12,10 @@ Bool window_position_occupied(int x, int y, Window win_to_ignore) {
 	unsigned int num_windows;
 	XQueryTree(dpy, DefaultRootWindow(dpy), &dummy1, &dummy2, &window_list, &num_windows);
 
-	printf("windows found: %d\n", num_windows);
 	// check if any of the windows occupy the specified position
 	for (int i=0; i<num_windows; i++) {
 		// ignore the new window
 		if (window_list[i] == win_to_ignore) {
-			printf("ignoring new window, continuing...\n");
 			continue;
 		}
 
@@ -29,22 +28,25 @@ Bool window_position_occupied(int x, int y, Window win_to_ignore) {
 			continue;
 		}
 
-		printf("window %d x and y: %d, %d\n", i, attr.x, attr.y);
 		if (!status) goto cleanup;
 
 		if (attr.x == x && attr.y == y) {
-			printf("it's occupied!\n");
+			debug_log("window.c: window_position_occupied: position occupied\n");
 			is_occupied	= True;
 			break;
 		}
 	}
 
 cleanup:
-	XFree(window_list);
+	if (window_list != NULL) {
+		debug_log("window.c: window_position_occupied: freeing window list\n");
+		XFree(window_list);
+	}
 	return is_occupied;
 }
 
 void window_map(XMapEvent *e) {
+	debug_log("window.c: window_map: mapping window\n");
 	// if it's a new window, give it a border and associate 
 	// the window with the current workspace
 	if (!exists_in_map(e->window)) {
@@ -69,7 +71,10 @@ void window_map(XMapEvent *e) {
 				break;
 			}
 		}
-		XFree(class);
+
+		if (class != NULL) {
+			XFree(class);
+		}
 
 		// if window has not been moved by the layout, move it to the centre
 		if (!window_moved) {
@@ -82,6 +87,7 @@ void window_map(XMapEvent *e) {
 	}
 
 	// focus new window
+	debug_log("window.c: window_map: focused window %lx\n", e->window);
 	focus_window_by_id(e->window);
 }
 
@@ -102,6 +108,6 @@ void focus_window_by_id(Window win) {
 }
 
 void focus_window_by_number(int num) {
-	printf("focusing window %d\n", num);
+	debug_log("window.c: focus_window_by_number: pretending to focus window %d\n", num);
 	// TODO XQueryTree, find nth window and focus it
 }

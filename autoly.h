@@ -98,6 +98,7 @@ extern void save_layout(const char *);
 extern void new_layout(const char *);
 
 // utils.c 
+extern void   debug_log(const char *, ... );
 extern void   execute_command(const char *);
 extern void   give_border(Window);
 extern void   destroy_focused_window();

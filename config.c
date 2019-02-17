@@ -32,15 +32,12 @@ void load_config() {
 
 	// free all used resources
 	cleanupiter:
-		printf("loadConfig iter free\n");
+		debug_log("config.c: load_config: cleanupiter free\n");
 		toml_table_iter_free(it);
 
 	cleanuptable:
-		printf("loadConfig table free\n");
-		// TODO toml_table_free(table);
-		printf("finished freeing table\n");
 		if (err.code != TOML_OK) {
-			printf("ERROR NOT OK\n");
+			debug_log("config.c: load_config: toml error not TOML_OK\n");
 			fprintf(stderr, "toml: %d: %s\n", err.code, err.message);
 			toml_clear_err(&err);
 		}
